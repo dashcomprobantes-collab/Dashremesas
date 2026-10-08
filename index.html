@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Remesas · Control</title>
+<style>
+:root{--bg:#f5f7f8;--card:#fff;--text:#14181f;--muted:#5f6b7a;--line:#e3e7ec;--brand:#0f766e;--brand-soft:#ccfbf1;--ok:#15803d;--ok-soft:#dcfce7;--warn:#b45309;--warn-soft:#fef3c7;--bad:#b91c1c;--bad-soft:#fee2e2;--chip:#eef2f5;--shadow:0 1px 2px rgba(16,24,40,.05),0 2px 6px rgba(16,24,40,.06)}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--text:#e6e9ed;--muted:#9aa5b4;--line:#2a323d;--brand:#2dd4bf;--brand-soft:#123b38;--ok:#4ade80;--ok-soft:#14321f;--warn:#fbbf24;--warn-soft:#3a2d0d;--bad:#f87171;--bad-soft:#3b1515;--chip:#1f2630;--shadow:none}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--brand)}
+.hidden{display:none!important}
+header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;flex:1;min-width:120px}
+.badge{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}.badge.warn{background:var(--warn-soft);color:var(--warn)}.badge.bad{background:var(--bad-soft);color:var(--bad)}.badge.brand{background:var(--brand-soft);color:var(--brand)}
+nav.tabs{display:flex;gap:4px;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:53px;z-index:19;overflow-x:auto}
+nav.tabs button{border:0;background:none;padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap}
+nav.tabs button.on{background:var(--brand-soft);color:var(--brand);font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 120px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+@media (max-width:640px){.grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:24px;font-weight:700;letter-spacing:-.01em}
+.kpi .s{font-size:13px;color:var(--muted);margin-top:2px}
+.sec{margin-top:16px}
+.sec>h2{font-size:16px;margin:0 0 10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:9px;cursor:pointer}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+@media (prefers-color-scheme:dark){.btn.pri{color:#06201d}}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.progress{height:10px;background:var(--chip);border-radius:99px;overflow:hidden;margin-top:8px}
+.progress>i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--card);position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--chip)}
+tfoot td{font-weight:700}
+.muted{color:var(--muted)}.small{font-size:13px}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media (max-width:520px){.f2{grid-template-columns:1fr}}
+.hint{font-size:12px;color:var(--muted);margin-top:3px;min-height:16px}
+.calc{background:var(--chip);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:14px;display:grid;grid-template-columns:auto auto;gap:4px 14px}
+.calc b{text-align:right;font-variant-numeric:tabular-nums}
+.alert{padding:10px 12px;border-radius:10px;margin-bottom:8px;font-size:14px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)}.alert.bad{background:var(--bad-soft);color:var(--bad)}.alert.info{background:var(--brand-soft);color:var(--brand)}
+.fab{position:fixed;right:16px;bottom:18px;z-index:30;display:flex;gap:8px}
+.fab .btn{box-shadow:0 4px 14px rgba(0,0,0,.18)}
+dialog{border:0;border-radius:14px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--card);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg-h{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:2}
+.dlg-h h2{margin:0;font-size:17px;flex:1}
+.dlg-b{padding:4px 16px 16px}
+.dlg-f{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--card)}
+.x{border:0;background:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+#toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast.on{opacity:1}
+.login{max-width:380px;margin:12vh auto;padding:0 16px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px}
+.list-plain{margin:0;padding-left:18px}
+.estado{border:0;cursor:pointer}
+@media (max-width:640px){header h1{font-size:16px}.kpi .v{font-size:21px}nav.tabs{top:auto}}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login hidden">
+  <div class="card">
+    <h2 style="margin-top:0">Remesas · Control</h2>
+    <p class="muted small">Inicia sesión con el usuario que creaste en Firebase.</p>
+    <form id="loginForm">
+      <label>Correo</label><input id="lgEmail" type="email" autocomplete="username" required>
+      <label>Contraseña</label><input id="lgPass" type="password" autocomplete="current-password" required>
+      <div class="hint" id="lgErr" style="color:var(--bad)"></div>
+      <button class="btn pri" style="width:100%;margin-top:8px">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+  <header>
+    <h1>Remesas · Control</h1>
+    <select id="mesSel" style="width:auto"></select>
+    <span id="modeBadge" class="badge"></span>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button data-v="inicio">Inicio</button>
+    <button data-v="envios">Envíos</button>
+    <button data-v="compras">Compras USDT</button>
+    <button data-v="clientes">Clientes</button>
+    <button data-v="ajustes">Ajustes</button>
+  </nav>
+  <main id="view"></main>
+  <div class="fab">
+    <button class="btn" onclick="App.abrirLote()">+ Compra</button>
+    <button class="btn pri" onclick="App.abrirEnvio()">+ Envío</button>
+  </div>
+</div>
+
+<div id="loadingView" class="login"><div class="card muted">Cargando…</div></div>
+
+<dialog id="dlg"></dialog>
+<div id="toast"></div>
+<datalist id="dlClientes"></datalist>
+
+<script type="module">
+/* ============================================================
+   1) CONFIGURACIÓN DE FIREBASE
+   Pega aquí los datos de tu proyecto (Firebase > Configuración
+   del proyecto > Tus apps > Configuración del SDK).
+   Si lo dejas vacío, la app funciona en "modo local" (los datos
+   quedan solo en este navegador), útil para probar.
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDJFejubqn118UtUZRR6aW3uESsl3HIUm4",
+  authDomain: "dash-remesas.firebaseapp.com",
+  projectId: "dash-remesas",
+  storageBucket: "dash-remesas.firebasestorage.app",
+  messagingSenderId: "546494270588",
+  appId: "1:546494270588:web:e2cad2f11e0297c435cdf9"
+};
+const FB_VERSION = "12.18.0";
+/* ============================================================ */
+
+const MODO_LOCAL = !FIREBASE_CONFIG.apiKey;
+const COLS = ['clientes','envios','lotes','config'];
+
+const DEFAULT_CONFIG = {
+  tasaDia: 0.95,
+  comisionBanco: 0.3,
+  metaUSD: 5000,
+  diasInactivo: 30,
+  dolarRef: 920,
+  tramos: [
+    {desde:0,   hasta:200,  trab:0,  mio:0},
+    {desde:200, hasta:300,  trab:5,  mio:5},
+    {desde:300, hasta:450,  trab:10, mio:10},
+    {desde:450, hasta:null, trab:15, mio:15}
+  ]
+};
+
+const S = {clientes:[], envios:[], lotes:[], config:structuredClone(DEFAULT_CONFIG), view:'inicio', mes:mesActual(), q:'', estado:'todos', soloInactivos:false};
+let C = null;           // resultados de cálculos
+let Store = null;
+let unsubs = [];
+
+/* ---------- utilidades ---------- */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function clean(o){ return JSON.parse(JSON.stringify(o, (k,v)=> (typeof v==='number' && !isFinite(v)) ? null : v)); }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function mesActual(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function ahoraLocal(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16); }
+function parseNum(v){
+  if(v==null) return NaN; v=String(v).trim().replace(/\s/g,'').replace(/[$]/g,''); if(!v) return NaN;
+  const hc=v.includes(','), hd=v.includes('.');
+  if(hc&&hd){ v = v.lastIndexOf(',')>v.lastIndexOf('.') ? v.replace(/\./g,'').replace(',','.') : v.replace(/,/g,''); }
+  else if(hc){ v = (v.match(/,/g).length>1) ? v.replace(/,/g,'') : v.replace(',','.'); }
+  else if(hd){ if(v.match(/\./g).length>1) v=v.replace(/\./g,''); }
+  const n=parseFloat(v.replace(/[^0-9.\-]/g,'')); return isNaN(n)?NaN:n;
+}
+function parseInt0(v){ const d=String(v??'').replace(/[^0-9\-]/g,''); return d?parseInt(d,10):NaN; }
+const nf0=new Intl.NumberFormat('es-CL',{maximumFractionDigits:0});
+const nf2=new Intl.NumberFormat('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ok=n=> n!=null && isFinite(n);
+const fCLP=n=> !ok(n)?'—':(n<0?'-$':'$')+nf0.format(Math.abs(Math.round(n)));
+const fBs=n=> !ok(n)?'—':nf2.format(n)+' Bs';
+const fUSD=n=> !ok(n)?'—':'US$ '+nf0.format(Math.round(n));
+const fUSDT=n=> !ok(n)?'—':nf2.format(n)+' USDT';
+const fT=n=> !ok(n)?'—':Number(n).toFixed(4);
+const fPct=n=> !ok(n)?'—':(n*100).toFixed(2).replace('.',',')+'%';
+const fFecha=f=> f? f.slice(8,10)+'/'+f.slice(5,7)+'/'+f.slice(2,4)+' '+f.slice(11,16) : '—';
+const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const fMes=k=> k? MESES[+k.slice(5,7)-1]+' '+k.slice(0,4) : 'Todos';
+function compact(n){ const a=Math.abs(n); if(a>=1e6) return (n/1e6).toFixed(1).replace('.',',')+'M'; if(a>=1e3) return Math.round(n/1e3)+'k'; return Math.round(n)+''; }
+function diasDesde(f){ return f? Math.floor((Date.now()-new Date(f).getTime())/864e5) : null; }
+function normRut(r){ let s=String(r||'').toUpperCase().replace(/[.\s]/g,'').replace(/\//g,'-'); if(/^\d{7,8}[0-9K]$/.test(s)) s=s.slice(0,-1)+'-'+s.slice(-1); return s; }
+function rutValido(r){ const m=/^(\d{7,8})-([0-9K])$/.exec(normRut(r)); if(!m) return false; let s=0,f=2; for(let i=m[1].length-1;i>=0;i--){ s+= +m[1][i]*f; f=f===7?2:f+1; } const dv=11-(s%11); const d= dv===11?'0': dv===10?'K': String(dv); return d===m[2]; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+function descargar(nombre, contenido, tipo){ const b=new Blob([contenido],{type:tipo}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=nombre; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
+function tramoPara(usdt){ const t=(S.config.tramos||[]).find(t=> usdt>=(+t.desde||0) && (t.hasta==null||t.hasta===''||usdt<+t.hasta)); return t||{trab:0,mio:0}; }
+
+/* ---------- almacenamiento: modo local ---------- */
+const LocalStore = {
+  key:'remesas_local_v1', data:{}, subs:{},
+  async init(){ try{ this.data=JSON.parse(localStorage.getItem(this.key))||{}; }catch(e){ this.data={}; } COLS.forEach(c=> this.data[c]=this.data[c]||{}); },
+  persist(){ try{ localStorage.setItem(this.key, JSON.stringify(this.data)); }catch(e){ toast('No se pudo guardar en el navegador'); } },
+  list(c){ return Object.entries(this.data[c]).map(([id,d])=>({id,...d})); },
+  emit(c){ this.persist(); this.subs[c] && this.subs[c](this.list(c)); },
+  listen(c, cb){ this.subs[c]=cb; cb(this.list(c)); return ()=>{ delete this.subs[c]; }; },
+  set(c,id,d,merge=true){ this.data[c][id] = merge ? {...(this.data[c][id]||{}), ...clean(d)} : clean(d); this.emit(c); return Promise.resolve(); },
+  del(c,id){ delete this.data[c][id]; this.emit(c); return Promise.resolve(); },
+  async batchSet(items){ items.forEach(it=>{ this.data[it.col][it.id]=clean(it.data); }); COLS.forEach(c=>this.emit(c)); },
+  async logout(){}
+};
+
+/* ---------- almacenamiento: Firebase ---------- */
+const FireStore = {
+  m:{}, db:null, auth:null, onAuth:null,
+  async init(){
+    const base=`https://www.gstatic.com/firebasejs/${FB_VERSION}/`;
+    const [a,au,fs] = await Promise.all([import(base+'firebase-app.js'), import(base+'firebase-auth.js'), import(base+'firebase-firestore.js')]);
+    this.m={...a,...au,...fs};
+    const app=a.initializeApp(FIREBASE_CONFIG);
+    this.auth=au.getAuth(app);
+    try{ this.db=fs.initializeFirestore(app,{localCache:fs.persistentLocalCache({tabManager:fs.persistentMultipleTabManager()})}); }
+    catch(e){ this.db=fs.getFirestore(app); }
+    au.onAuthStateChanged(this.auth, u=> this.onAuth && this.onAuth(u));
+  },
+  login(e,p){ return this.m.signInWithEmailAndPassword(this.auth,e,p); },
+  logout(){ return this.m.signOut(this.auth); },
+  listen(c, cb){ return this.m.onSnapshot(this.m.collection(this.db,c), snap=> cb(snap.docs.map(d=>({id:d.id,...d.data()}))), err=> toast('Error leyendo '+c+': '+err.code)); },
+  set(c,id,d,merge=true){ return this.m.setDoc(this.m.doc(this.db,c,id), clean(d), {merge}); },
+  del(c,id){ return this.m.deleteDoc(this.m.doc(this.db,c,id)); },
+  async batchSet(items){
+    for(let i=0;i<items.length;i+=400){ const b=this.m.writeBatch(this.db); items.slice(i,i+400).forEach(it=> b.set(this.m.doc(this.db,it.col,it.id), clean(it.data))); await b.commit(); }
+  }
+};
+function guardar(c,id,d,merge=true){ Store.set(c,id,d,merge).catch(e=> toast('Error al guardar: '+(e.code||e.message))); }
+function eliminar(c,id){ Store.del(c,id).catch(e=> toast('Error al eliminar: '+(e.code||e.message))); }
+
+/* ============================================================
+   2) CÁLCULOS
+   - Tasa de costo de una compra = (Bs recibidos × (1 − comisión bancaria)) ÷ CLP gastados
+   - Ganancia por compra = tus USDT × precio del USDT (CLP/USDT)
+   - Residual por envío = CLP que pagó el cliente − costo en CLP de los Bs entregados
+     (costo calculado con la tasa promedio ponderada de tu inventario de Bs)
+   - Ganancia total = ganancia por compras + residual de envíos
+   ============================================================ */
+function calcular(lotes, envios, cfg){
+  const cb=(+cfg.comisionBanco||0)/100;
+  const L=lotes.map(l=>{
+    const clp=+l.clp||0, usdt=+l.usdt||0, trab=+l.usdtTrab||0, mio=+l.usdtMio||0;
+    const vend=usdt-trab-mio, precio= usdt>0? clp/usdt : 0;
+    const tieneBs = l.bs!=null && l.bs!=='' && +l.bs>0;
+    const bs= tieneBs? +l.bs : 0, bsNet= bs*(1-cb);
+    return {...l, clp, usdt, trab, mio, vend, precio, tieneBs, bs, bsNet,
+      tasaCosto: tieneBs&&clp>0? bsNet/clp : null,
+      tasaUSDT: tieneBs&&vend>0? bs/vend : null,
+      ganUSDT: mio*precio, costoTrab: trab*precio, mes:(l.fecha||'').slice(0,7)};
+  });
+  const E=envios.map(e=>{ const clp=+e.clp||0, tasa=+e.tasa||0; const bs= ok(+e.bs)&&+e.bs>0 ? +e.bs : clp*tasa;
+    return {...e, clp, tasa, bs, mes:(e.fecha||'').slice(0,7), costo:null, residual:null}; });
+
+  // inventario de Bs con costo promedio ponderado, en orden cronológico
+  const ev=[...L.filter(l=>l.tieneBs).map(o=>({t:0,f:o.fecha||'',c:o.createdAt||0,o})), ...E.map(o=>({t:1,f:o.fecha||'',c:o.createdAt||0,o}))]
+    .sort((a,b)=> a.f<b.f?-1 : a.f>b.f?1 : (a.t-b.t)||(a.c-b.c));
+  let qty=0, cost=0, last=null;
+  for(const x of ev){
+    if(x.t===0){ qty+=x.o.bsNet; cost+=x.o.clp; last=x.o.tasaCosto; }
+    else { const e=x.o; const r=(qty>0&&cost>0)? qty/cost : last;
+      if(r){ e.costo=e.bs/r; e.tasaCostoAplicada=r; e.residual=e.clp-e.costo; qty-=e.bs; cost-=e.costo; } }
+  }
+  const tasaActual=(qty>0&&cost>0)? qty/cost : last;
+  const ultimoLote=[...L].sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''))[0];
+
+  // por mes
+  const meses={};
+  const M=k=> meses[k] || (meses[k]={mes:k,vol:0,n:0,bsEnv:0,residual:0,volCost:0,sinCosto:0,ganUSDT:0,trabUSDT:0,trabCLP:0,compras:0,clpCompras:0,usdtComprados:0,clientes:new Set(),nuevos:0});
+  E.forEach(e=>{ const m=M(e.mes); m.vol+=e.clp; m.n++; m.bsEnv+=e.bs; m.clientes.add(e.clienteId); if(e.residual!=null){ m.residual+=e.residual; m.volCost+=e.clp; } else m.sinCosto++; });
+  L.forEach(l=>{ const m=M(l.mes); m.ganUSDT+=l.ganUSDT; m.trabUSDT+=l.trab; m.trabCLP+=l.costoTrab; m.compras++; m.clpCompras+=l.clp; m.usdtComprados+=l.usdt; });
+
+  // por cliente
+  const cli={};
+  [...E].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(e=>{
+    const c= cli[e.clienteId] || (cli[e.clienteId]={id:e.clienteId,n:0,total:0,residual:0,primero:e.fecha,ultimo:e.fecha,meses:new Set()});
+    c.n++; c.total+=e.clp; c.residual+=(e.residual||0); c.ultimo=e.fecha; c.meses.add(e.mes);
+  });
+  Object.values(cli).forEach(c=>{ const k=(c.primero||'').slice(0,7); if(meses[k]) meses[k].nuevos++; c.dias=diasDesde(c.ultimo); });
+
+  Object.values(meses).forEach(m=>{ m.ganancia=m.ganUSDT+m.residual; m.margen= m.vol? m.ganancia/m.vol : null; m.precioUSDT= m.usdtComprados? m.clpCompras/m.usdtComprados : null; m.nClientes=m.clientes.size; });
+
+  const bsNetTotal=L.reduce((s,l)=>s+l.bsNet,0), bsEnvTotal=E.reduce((s,e)=>s+e.bs,0);
+  const bsPend=E.filter(e=>e.estado!=='pagado').reduce((s,e)=>s+e.bs,0);
+  const lotesSinBs=L.filter(l=>!l.tieneBs);
+  return {L,E,meses,cli,tasaActual,ultimoLote,bsLibres:bsNetTotal-bsEnvTotal,bsPend,lotesSinBs};
+}
+function usdRate(mes){ const m=C.meses[mes]; return (m&&m.precioUSDT) || (C.ultimoLote&&C.ultimoLote.precio) || +S.config.dolarRef || 920; }
+function resumen(mes){
+  if(mes) return C.meses[mes] || {mes,vol:0,n:0,residual:0,ganUSDT:0,ganancia:0,margen:null,trabUSDT:0,trabCLP:0,nClientes:0,nuevos:0,sinCosto:0,compras:0};
+  const r={mes:'',vol:0,n:0,residual:0,ganUSDT:0,trabUSDT:0,trabCLP:0,sinCosto:0,compras:0,nuevos:0};
+  Object.values(C.meses).forEach(m=>['vol','n','residual','ganUSDT','trabUSDT','trabCLP','sinCosto','compras','nuevos'].forEach(k=> r[k]+=m[k]));
+  r.ganancia=r.ganUSDT+r.residual; r.margen=r.vol? r.ganancia/r.vol : null; r.nClientes=Object.keys(C.cli).length; return r;
+}
+window.__calcular = calcular; // para pruebas
+
+/* ============================================================
+   3) VISTAS
+   ============================================================ */
+let renderPend=false;
+function render(){ if(renderPend) return; renderPend=true; requestAnimationFrame(()=>{ renderPend=false; _render(); }); }
+function _render(){
+  C=calcular(S.lotes,S.envios,S.config);
+  // selector de mes
+  const ms=new Set([mesActual(), ...C.E.map(e=>e.mes), ...C.L.map(l=>l.mes)].filter(Boolean));
+  const opts=[...ms].sort().reverse();
+  const sel=document.getElementById('mesSel');
+  sel.innerHTML=opts.map(k=>`<option value="${k}" ${k===S.mes?'selected':''}>${fMes(k)}</option>`).join('')+`<option value="" ${S.mes===''?'selected':''}>Todo el historial</option>`;
+  document.querySelectorAll('#tabs button').forEach(b=> b.classList.toggle('on', b.dataset.v===S.view));
+  document.getElementById('dlClientes').innerHTML=S.clientes.map(c=>`<option value="${esc(c.rut||c.id)}">${esc(c.nombre)}</option>`).join('');
+  const v=document.getElementById('view');
+  v.innerHTML=({inicio:vInicio,envios:vEnvios,compras:vCompras,clientes:vClientes,ajustes:vAjustes}[S.view]||vInicio)();
+  if(S.view==='envios'||S.view==='clientes'){ const q=document.getElementById('q'); if(q&&S._focusQ){ q.focus(); q.setSelectionRange(q.value.length,q.value.length); } }
+}
+function go(vw){ S.view=vw; S._focusQ=false; render(); window.scrollTo(0,0); }
+
+function barras(serie, color){
+  const W=600,H=170,base=H-22; const max=Math.max(1,...serie.map(s=>Math.abs(s.v))); const bw=(W-20)/serie.length;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">`+serie.map((s,i)=>{
+    const h=Math.max(s.v?2:0,(Math.abs(s.v)/max)*(base-24)); const x=10+i*bw+bw*.15, w=bw*.7;
+    const y= s.v>=0? base-h : base; const col= s.v<0?'var(--bad)':color;
+    return `<rect x="${x}" y="${s.v>=0?y:base}" width="${w}" height="${s.v>=0?h:Math.min(h,20)}" rx="3" fill="${col}"><title>${s.label}: ${s.tip}</title></rect>`+
+      `<text x="${x+w/2}" y="${H-6}" text-anchor="middle">${s.label}</text>`+
+      (s.v? `<text x="${x+w/2}" y="${(s.v>=0?y:base)-4}" text-anchor="middle">${compact(s.v)}</text>`:'');
+  }).join('')+`<line x1="10" x2="${W-10}" y1="${base}" y2="${base}" stroke="var(--line)"/></svg>`;
+}
+function ultimos12(fin){
+  const [y,m]=(fin||mesActual()).split('-').map(Number); const out=[];
+  for(let i=11;i>=0;i--){ const d=new Date(y,m-1-i,1); out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  return out;
+}
+
+function vInicio(){
+  const r=resumen(S.mes), usd=usdRate(S.mes||mesActual());
+  const ganUSD=r.ganancia/usd, meta=+S.config.metaUSD||5000;
+  const pctMeta=Math.max(0,Math.min(1,ganUSD/meta));
+  const ta=C.tasaActual, td=+S.config.tasaDia;
+  const spread= ta&&td? 1-td/ta : null;
+  const inact=Object.values(C.cli).filter(c=>c.dias!=null&&c.dias>(+S.config.diasInactivo||30)).length;
+  const ticket=r.n? r.vol/r.n : null;
+  const ks=ultimos12(S.mes);
+  const sG=ks.map(k=>{const m=C.meses[k]; const v=m?m.ganancia:0; return {label:MESES[+k.slice(5)-1],v,tip:fCLP(v)};});
+  const sV=ks.map(k=>{const m=C.meses[k]; const v=m?m.vol:0; return {label:MESES[+k.slice(5)-1],v,tip:fCLP(v)};});
+  const top=Object.values(C.cli).map(c=>{ const es=C.E.filter(e=>e.clienteId===c.id && (!S.mes||e.mes===S.mes)); return {c, v:es.reduce((s,e)=>s+e.clp,0), n:es.length}; }).filter(x=>x.n).sort((a,b)=>b.v-a.v).slice(0,5);
+  const nombre=id=> (S.clientes.find(c=>c.id===id)||{}).nombre || id;
+  const alerts=[];
+  if(r.sinCosto) alerts.push(`<div class="alert warn">${r.sinCosto} envío(s) sin compra de USDT previa con Bs registrados: su ganancia no se puede calcular todavía.</div>`);
+  if(C.lotesSinBs.length) alerts.push(`<div class="alert info">${C.lotesSinBs.length} compra(s) sin Bs recibidos registrados (${fUSDT(C.lotesSinBs.reduce((s,l)=>s+l.vend,0))} por vender). <a href="#" onclick="App.go('compras');return false">Completar</a></div>`);
+  if(C.bsLibres<0) alerts.push(`<div class="alert bad">Te faltan ${fBs(-C.bsLibres)} en Venezuela para cubrir los envíos registrados. Necesitas comprar USDT.</div>`);
+  return `
+  ${alerts.join('')}
+  <div class="grid">
+    <div class="card kpi"><h3>Ganancia · ${fMes(S.mes)}</h3><div class="v ${r.ganancia<0?'neg':''}">${fCLP(r.ganancia)}</div><div class="s">≈ ${fUSD(ganUSD)} · USDT propios ${fCLP(r.ganUSDT)} · residual ${fCLP(r.residual)}</div></div>
+    <div class="card kpi"><h3>Meta mensual</h3><div class="v">${Math.round(pctMeta*100)}%</div><div class="progress"><i style="width:${pctMeta*100}%"></i></div><div class="s">${fUSD(ganUSD)} de ${fUSD(meta)}${S.mes?'':' (historial total)'}</div></div>
+    <div class="card kpi"><h3>Volumen enviado</h3><div class="v">${fCLP(r.vol)}</div><div class="s">${r.n} envíos · ticket promedio ${fCLP(ticket)}</div></div>
+    <div class="card kpi"><h3>Margen real</h3><div class="v">${fPct(r.margen)}</div><div class="s">Ganancia ÷ volumen enviado</div></div>
+    <div class="card kpi"><h3>Clientes</h3><div class="v">${r.nClientes||0}</div><div class="s">activos en el período · ${r.nuevos||0} nuevos · ${inact} inactivos (+${S.config.diasInactivo} días)</div></div>
+    <div class="card kpi"><h3>Comisión trabajador</h3><div class="v">${fUSDT(r.trabUSDT)}</div><div class="s">≈ ${fCLP(r.trabCLP)} · ${r.compras} compras</div></div>
+    <div class="card kpi"><h3>Bs libres en Venezuela</h3><div class="v ${C.bsLibres<0?'neg':''}">${fBs(C.bsLibres)}</div><div class="s">Pendientes por pagar: ${fBs(C.bsPend)}</div></div>
+    <div class="card kpi"><h3>Tasa de costo actual</h3><div class="v">${fT(ta)}</div><div class="s">Bs por CLP (promedio inventario) · última compra ${fT(C.ultimoLote&&C.ultimoLote.tasaCosto)}</div></div>
+  </div>
+
+  <div class="sec card">
+    <h3>Tasa del día vs. costo</h3>
+    <div class="row"><span>Tasa del día: <b>${fT(td)}</b></span><span class="muted">·</span><span>Residual estimado por envío: <b class="${spread<0?'neg':'pos'}">${fPct(spread)}</b></span><span class="muted small">(además de tus USDT por compra)</span></div>
+    ${ta?`<div class="small muted" style="margin-top:6px">Tasa para un residual de 1%: <b>${fT(ta*.99)}</b> · 2%: <b>${fT(ta*.98)}</b> · 3%: <b>${fT(ta*.97)}</b></div>`:'<div class="small muted">Registra una compra con Bs recibidos para calcular la tasa de costo.</div>'}
+  </div>
+
+  <div class="sec grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+    <div class="card chart"><h3>Ganancia por mes (CLP)</h3>${barras(sG,'var(--brand)')}</div>
+    <div class="card chart"><h3>Volumen por mes (CLP)</h3>${barras(sV,'#64748b')}</div>
+  </div>
+
+  <div class="sec card"><h3>Top clientes · ${fMes(S.mes)}</h3>
+    ${top.length? `<div class="tablewrap" style="border:0"><table><tbody>${top.map(x=>`<tr class="click" onclick="App.abrirCliente('${esc(x.c.id)}')"><td>${esc(nombre(x.c.id))}</td><td class="n">${x.n} envíos</td><td class="n">${fCLP(x.v)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted small">Sin envíos en este período.</div>'}
+  </div>`;
+}
+
+function filtrarEnvios(){
+  const q=S.q.trim().toLowerCase();
+  return C.E.filter(e=> (!S.mes||e.mes===S.mes) && (S.estado==='todos'||(S.estado==='pendiente'? e.estado!=='pagado' : e.estado==='pagado')) &&
+    (!q || [e.clienteNombre,e.clienteRut,e.beneficiario&&e.beneficiario.nombre,e.comprobante].join(' ').toLowerCase().includes(q)))
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+}
+function vEnvios(){
+  const es=filtrarEnvios(); const t=es.reduce((a,e)=>({clp:a.clp+e.clp,bs:a.bs+e.bs,res:a.res+(e.residual||0)}),{clp:0,bs:0,res:0});
+  return `
+  <div class="row" style="margin-bottom:10px">
+    <input id="q" placeholder="Buscar cliente, RUT, beneficiario…" value="${esc(S.q)}" style="max-width:320px" oninput="App.buscar(this.value)">
+    <select style="width:auto" onchange="App.setEstado(this.value)">
+      <option value="todos" ${S.estado==='todos'?'selected':''}>Todos</option>
+      <option value="pendiente" ${S.estado==='pendiente'?'selected':''}>Pendientes</option>
+      <option value="pagado" ${S.estado==='pagado'?'selected':''}>Pagados</option>
+    </select>
+    <span class="spacer"></span><span class="muted small">${es.length} envíos · ${fMes(S.mes)}</span>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Fecha</th><th>Cliente</th><th>Beneficiario</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th class="n">Residual</th><th>Estado</th></tr></thead>
+    <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')">
+      <td>${fFecha(e.fecha)}</td><td>${esc(e.clienteNombre)}<div class="muted small">${esc(e.clienteRut)}</div></td>
+      <td>${esc(e.beneficiario&&e.beneficiario.nombre)}<div class="muted small">${esc(e.beneficiario&&e.beneficiario.banco)}</div></td>
+      <td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td><td class="n">${fBs(e.bs)}</td>
+      <td class="n ${e.residual<0?'neg':''}">${e.residual==null?'<span class="muted">s/c</span>':fCLP(e.residual)}</td>
+      <td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td></tr>`).join('') || `<tr><td colspan="8" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
+    ${es.length?`<tfoot><tr><td colspan="3">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td><td class="n">${fCLP(t.res)}</td><td></td></tr></tfoot>`:''}
+  </table></div>
+  <p class="muted small">“s/c”: sin costo calculable (no hay compra con Bs registrada antes de ese envío). Toca el estado para marcar pagado/pendiente.</p>`;
+}
+
+function vCompras(){
+  const ls=C.L.filter(l=>!S.mes||l.mes===S.mes).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const t=ls.reduce((a,l)=>({clp:a.clp+l.clp,usdt:a.usdt+l.usdt,trab:a.trab+l.trab,mio:a.mio+l.mio,bs:a.bs+l.bs,bsNet:a.bsNet+l.bsNet,gan:a.gan+l.ganUSDT}),{clp:0,usdt:0,trab:0,mio:0,bs:0,bsNet:0,gan:0});
+  return `
+  <div class="row" style="margin-bottom:10px"><span class="muted small">${ls.length} compras · ${fMes(S.mes)}</span></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Fecha</th><th class="n">CLP</th><th class="n">USDT</th><th class="n">Precio</th><th class="n">Trab.</th><th class="n">Tuyos</th><th class="n">Vendidos</th><th class="n">Bs recibidos</th><th class="n">Bs netos</th><th class="n">Tasa costo</th><th class="n">Ganancia USDT</th></tr></thead>
+    <tbody>${ls.map(l=>`<tr class="click" onclick="App.abrirLote('${l.id}')">
+      <td>${fFecha(l.fecha)}</td><td class="n">${fCLP(l.clp)}</td><td class="n">${nf2.format(l.usdt)}</td><td class="n">${fCLP(l.precio)}</td>
+      <td class="n">${nf2.format(l.trab)}</td><td class="n">${nf2.format(l.mio)}</td><td class="n">${nf2.format(l.vend)}</td>
+      <td class="n">${l.tieneBs?fBs(l.bs):'<span class="badge warn">pendiente</span>'}</td><td class="n">${l.tieneBs?fBs(l.bsNet):'—'}</td>
+      <td class="n">${fT(l.tasaCosto)}</td><td class="n">${fCLP(l.ganUSDT)}</td></tr>`).join('') || `<tr><td colspan="11" class="muted">No hay compras. Usa “+ Compra”.</td></tr>`}</tbody>
+    ${ls.length?`<tfoot><tr><td>Total</td><td class="n">${fCLP(t.clp)}</td><td class="n">${nf2.format(t.usdt)}</td><td class="n">${fCLP(t.usdt?t.clp/t.usdt:null)}</td><td class="n">${nf2.format(t.trab)}</td><td class="n">${nf2.format(t.mio)}</td><td></td><td class="n">${fBs(t.bs)}</td><td class="n">${fBs(t.bsNet)}</td><td class="n">${fT(t.clp?t.bsNet/t.clp:null)}</td><td class="n">${fCLP(t.gan)}</td></tr></tfoot>`:''}
+  </table></div>
+  <p class="muted small">Tasa de costo = (Bs recibidos × (1 − ${S.config.comisionBanco}%)) ÷ CLP gastados. Incluye el costo de las comisiones.</p>`;
+}
+
+function vClientes(){
+  const q=S.q.trim().toLowerCase(), lim=+S.config.diasInactivo||30;
+  const refCount={}; S.clientes.forEach(c=>{ if(c.referidoPor) refCount[c.referidoPor]=(refCount[c.referidoPor]||0)+1; });
+  const rows=S.clientes.map(c=>({c, a:C.cli[c.id]||{n:0,total:0,residual:0,dias:null}}))
+    .filter(x=> (!q || [x.c.nombre,x.c.rut,x.c.telefono].join(' ').toLowerCase().includes(q)) && (!S.soloInactivos || (x.a.dias!=null&&x.a.dias>lim)))
+    .sort((a,b)=> b.a.total-a.a.total);
+  const nom=id=> (S.clientes.find(c=>c.id===id)||{}).nombre||'';
+  return `
+  <div class="row" style="margin-bottom:10px">
+    <input id="q" placeholder="Buscar nombre, RUT, teléfono…" value="${esc(S.q)}" style="max-width:320px" oninput="App.buscar(this.value)">
+    <label class="row small" style="margin:0;color:var(--text)"><input type="checkbox" style="width:auto" ${S.soloInactivos?'checked':''} onchange="App.setInactivos(this.checked)"> Solo inactivos (+${lim} días)</label>
+    <span class="spacer"></span><span class="muted small">${rows.length} clientes</span>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Cliente</th><th>Teléfono</th><th class="n">Envíos</th><th class="n">Total CLP</th><th class="n">Residual</th><th>Último envío</th><th>Origen</th><th class="n">Referidos</th></tr></thead>
+    <tbody>${rows.map(({c,a})=>`<tr class="click" onclick="App.abrirCliente('${esc(c.id)}')">
+      <td>${esc(c.nombre)}<div class="muted small">${esc(c.rut||c.id)}</div></td><td>${esc(c.telefono||'')}</td>
+      <td class="n">${a.n}</td><td class="n">${fCLP(a.total)}</td><td class="n">${fCLP(a.residual)}</td>
+      <td>${a.ultimo?fFecha(a.ultimo).slice(0,8):'—'} ${a.dias!=null?`<span class="badge ${a.dias>lim?'bad':'ok'}">${a.dias} d</span>`:''}</td>
+      <td class="small">${c.referidoPor? 'Ref: '+esc(nom(c.referidoPor)) : esc(c.origen||'')}</td><td class="n">${refCount[c.id]||0}</td></tr>`).join('') || `<tr><td colspan="8" class="muted">Sin clientes. Se crean automáticamente al registrar un envío.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function vAjustes(){
+  const c=S.config;
+  return `
+  <div class="card">
+    <h3>Parámetros</h3>
+    <div class="f2">
+      <div><label>Tasa del día (Bs por CLP)</label><input id="cfTasa" inputmode="decimal" value="${fT(c.tasaDia)}"></div>
+      <div><label>Comisión bancaria (%)</label><input id="cfBanco" inputmode="decimal" value="${c.comisionBanco}"></div>
+      <div><label>Meta de ganancia mensual (USD)</label><input id="cfMeta" inputmode="numeric" value="${c.metaUSD}"></div>
+      <div><label>Cliente inactivo después de (días)</label><input id="cfDias" inputmode="numeric" value="${c.diasInactivo}"></div>
+      <div><label>Dólar de referencia (CLP), si no hay compras</label><input id="cfDolar" inputmode="numeric" value="${c.dolarRef}"></div>
+    </div>
+    <label>Tramos de comisión por compra (USDT)</label>
+    <div class="tablewrap"><table><thead><tr><th>Desde (≥)</th><th>Hasta (&lt;)</th><th>Trabajador</th><th>Tú</th><th></th></tr></thead>
+      <tbody id="tramosBody">${(c.tramos||[]).map((t,i)=>filaTramo(t)).join('')}</tbody></table></div>
+    <div class="row" style="margin-top:8px"><button class="btn sm" onclick="App.addTramo()">+ Tramo</button><span class="muted small">Deja “Hasta” vacío para “sin límite”.</span></div>
+    <div class="row" style="margin-top:14px"><button class="btn pri" onclick="App.guardarAjustes()">Guardar ajustes</button></div>
+  </div>
+
+  <div class="card sec">
+    <h3>Respaldo y exportación</h3>
+    <div class="row">
+      <button class="btn" onclick="App.exportJSON()">Respaldo completo (JSON)</button>
+      <button class="btn" onclick="App.exportCSV('envios')">Envíos (CSV)</button>
+      <button class="btn" onclick="App.exportCSV('lotes')">Compras (CSV)</button>
+      <button class="btn" onclick="App.exportCSV('clientes')">Clientes (CSV)</button>
+    </div>
+    <label>Restaurar / importar respaldo JSON</label>
+    <input type="file" accept=".json,application/json" onchange="App.importJSON(this.files[0])">
+    <div class="hint">Agrega o reemplaza registros con el mismo ID. No borra nada.</div>
+  </div>
+
+  <div class="card sec">
+    <h3>Sesión</h3>
+    <div class="row"><span>${MODO_LOCAL?'Modo local: los datos están solo en este navegador.':'Conectado a Firebase como '+esc(S.email||'')}</span><span class="spacer"></span>${MODO_LOCAL?'':'<button class="btn" onclick="App.salir()">Cerrar sesión</button>'}</div>
+  </div>`;
+}
+function filaTramo(t){ return `<tr><td><input class="tDesde" inputmode="decimal" value="${t.desde??''}"></td><td><input class="tHasta" inputmode="decimal" value="${t.hasta??''}"></td><td><input class="tTrab" inputmode="decimal" value="${t.trab??0}"></td><td><input class="tMio" inputmode="decimal" value="${t.mio??0}"></td><td><button class="btn sm danger" onclick="this.closest('tr').remove()">×</button></td></tr>`; }
+
+/* ============================================================
+   4) FORMULARIOS
+   ============================================================ */
+const dlg=document.getElementById('dlg');
+function abrirDlg(html){ dlg.innerHTML=html; if(!dlg.open) dlg.showModal(); }
+function cerrarDlg(){ dlg.close(); }
+dlg.addEventListener('click', e=>{ if(e.target===dlg) cerrarDlg(); });
+
+function abrirEnvio(id){
+  const e= id? S.envios.find(x=>x.id===id) : null;
+  const ben=(e&&e.beneficiario)||{};
+  abrirDlg(`
+  <div class="dlg-h"><h2>${e?'Editar envío':'Nuevo envío'}</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <form id="fEnv" class="dlg-b" autocomplete="off">
+    <div class="f2">
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(e?e.fecha:ahoraLocal())}"></div>
+      <div><label>RUT / documento del cliente</label><input name="rut" list="dlClientes" required value="${esc(e?e.clienteRut:'')}" oninput="App.rutInput(this.value)"><div class="hint" id="rutHint"></div></div>
+      <div><label>Nombre del cliente</label><input name="nombre" required value="${esc(e?e.clienteNombre:'')}"></div>
+      <div><label>Teléfono (WhatsApp)</label><input name="telefono" inputmode="tel" value=""></div>
+    </div>
+    <div id="origenBox">
+      <label>¿Cómo llegó? (solo clientes nuevos)</label>
+      <select name="origen">
+        <option value="">Sin dato</option>
+        <optgroup label="Recomendado por cliente">${S.clientes.map(c=>`<option value="c:${esc(c.id)}">${esc(c.nombre)}</option>`).join('')}</optgroup>
+        <optgroup label="Otro canal"><option value="o:Redes sociales">Redes sociales</option><option value="o:WhatsApp / chatbot">WhatsApp / chatbot</option><option value="o:Agente">Agente</option><option value="o:Otro">Otro</option></optgroup>
+      </select>
+    </div>
+    <div class="f2">
+      <div><label>Monto que envía (CLP)</label><input name="clp" inputmode="numeric" required value="${e?e.clp:''}" oninput="App.calcEnvio()"></div>
+      <div><label>Tasa (Bs por CLP)</label><input name="tasa" inputmode="decimal" required value="${fT(e?e.tasa:S.config.tasaDia)}" oninput="App.calcEnvio()"></div>
+    </div>
+    <div class="calc" id="envCalc"></div>
+    <h3 style="margin:16px 0 0;font-size:14px">Beneficiario en Venezuela</h3>
+    <div id="benSelBox" class="hidden"><label>Beneficiarios guardados</label><select id="benSel" onchange="App.usarBen(this.value)"></select></div>
+    <div class="f2">
+      <div><label>Nombre</label><input name="bNombre" value="${esc(ben.nombre||'')}"></div>
+      <div><label>Cédula</label><input name="bCedula" value="${esc(ben.cedula||'')}"></div>
+      <div><label>Banco</label><input name="bBanco" value="${esc(ben.banco||'')}"></div>
+      <div><label>Cuenta / pago móvil</label><input name="bCuenta" value="${esc(ben.cuenta||'')}"></div>
+      <div><label>Teléfono</label><input name="bTel" inputmode="tel" value="${esc(ben.telefono||'')}"></div>
+      <div><label>Estado</label><select name="estado"><option value="pendiente" ${(!e||e.estado!=='pagado')?'selected':''}>Pendiente</option><option value="pagado" ${e&&e.estado==='pagado'?'selected':''}>Pagado</option></select></div>
+    </div>
+    <label>Comprobante (n° de operación o referencia)</label><input name="comprobante" value="${esc(e?e.comprobante||'':'')}">
+    <label>Nota</label><input name="nota" value="${esc(e?e.nota||'':'')}">
+  </form>
+  <div class="dlg-f">${e?`<button class="btn danger" onclick="App.borrar('envios','${e.id}')">Eliminar</button>`:''}<span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cancelar</button><button class="btn pri" onclick="App.guardarEnvio(${e?`'${e.id}'`:'null'})">Guardar</button></div>`);
+  if(e) rutInput(e.clienteRut, true);
+  calcEnvio();
+}
+function clientePorRut(r){ const id=normRut(r); return S.clientes.find(c=>c.id===id || normRut(c.rut)===id); }
+function rutInput(v, editando){
+  const f=document.getElementById('fEnv'); if(!f) return;
+  const c=clientePorRut(v), hint=document.getElementById('rutHint');
+  const valido=rutValido(v);
+  if(c){
+    const a=C.cli[c.id];
+    hint.innerHTML=`<span class="pos">Cliente existente</span> · ${a?a.n:0} envíos`;
+    if(!editando || !f.nombre.value) f.nombre.value=c.nombre||'';
+    f.telefono.value=c.telefono||'';
+    document.getElementById('origenBox').classList.add('hidden');
+    const bs=c.beneficiarios||[];
+    const box=document.getElementById('benSelBox');
+    if(bs.length){ box.classList.remove('hidden'); document.getElementById('benSel').innerHTML=`<option value="">— Elegir —</option>`+bs.map((b,i)=>`<option value="${i}">${esc(b.nombre)} · ${esc(b.banco||'')} ${esc(b.cuenta||'')}</option>`).join('')+`<option value="nuevo">+ Nuevo beneficiario</option>`;
+      if(!editando && bs.length===1) usarBen('0'); }
+    else box.classList.add('hidden');
+  } else {
+    hint.innerHTML= v? (valido?'<span class="muted">Cliente nuevo</span>':'<span class="muted">Cliente nuevo · RUT no válido (ok si es otro documento)</span>') : '';
+    document.getElementById('origenBox').classList.remove('hidden');
+    document.getElementById('benSelBox').classList.add('hidden');
+  }
+}
+function usarBen(i){
+  const f=document.getElementById('fEnv'); const c=clientePorRut(f.rut.value); const b= i===''||i==='nuevo'? {} : (c.beneficiarios||[])[+i]||{};
+  f.bNombre.value=b.nombre||''; f.bCedula.value=b.cedula||''; f.bBanco.value=b.banco||''; f.bCuenta.value=b.cuenta||''; f.bTel.value=b.telefono||'';
+  if(i!=='' && i!=='nuevo') document.getElementById('benSel').value=i;
+}
+function calcEnvio(){
+  const f=document.getElementById('fEnv'); if(!f) return;
+  const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value), bs=clp*tasa;
+  const r=C.tasaActual; const costo= r? bs/r : null; const res= costo!=null? clp-costo : null;
+  document.getElementById('envCalc').innerHTML=`
+    <span>Monto</span><b>${fCLP(clp)}</b>
+    <span>Llegan en Venezuela</span><b>${fBs(bs)}</b>
+    <span>Costo estimado (tasa ${fT(r)})</span><b>${fCLP(costo)}</b>
+    <span>Residual estimado</span><b class="${res<0?'neg':'pos'}">${fCLP(res)} ${ok(res)&&clp?'('+fPct(res/clp)+')':''}</b>`;
+}
+function guardarEnvio(id){
+  const f=document.getElementById('fEnv'); if(!f.reportValidity()) return;
+  const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value);
+  if(!(clp>0)) return toast('Monto CLP inválido'); if(!(tasa>0)) return toast('Tasa inválida');
+  const rut=f.rut.value.trim(), cid=normRut(rut); if(!cid) return toast('RUT requerido');
+  const existente=clientePorRut(rut);
+  const ben={nombre:f.bNombre.value.trim(), cedula:f.bCedula.value.trim(), banco:f.bBanco.value.trim(), cuenta:f.bCuenta.value.trim(), telefono:f.bTel.value.trim()};
+  const tieneBen=Object.values(ben).some(Boolean);
+  const clienteId= existente? existente.id : cid;
+  // cliente
+  const benef=[...((existente&&existente.beneficiarios)||[])];
+  if(tieneBen){ const k=b=>(b.cedula+'|'+b.cuenta).toLowerCase(); const i=benef.findIndex(b=>k(b)===k(ben)); if(i>=0) benef[i]={...benef[i],...ben}; else benef.push(ben); }
+  const cdata={rut:existente?existente.rut||rut:rut, nombre:f.nombre.value.trim(), beneficiarios:benef, actualizado:Date.now()};
+  if(f.telefono.value.trim()) cdata.telefono=f.telefono.value.trim();
+  if(!existente){ cdata.creado=Date.now(); const o=f.origen.value; if(o.startsWith('c:')){ cdata.referidoPor=o.slice(2); cdata.origen='Referido'; } else if(o.startsWith('o:')) cdata.origen=o.slice(2); }
+  guardar('clientes', clienteId, cdata, true);
+  // envío
+  const prev= id? S.envios.find(x=>x.id===id) : null;
+  const eid= id || uid();
+  guardar('envios', eid, {
+    fecha:f.fecha.value, clienteId, clienteRut:cdata.rut, clienteNombre:cdata.nombre,
+    clp, tasa, bs:Math.round(clp*tasa*100)/100, beneficiario:ben,
+    comprobante:f.comprobante.value.trim(), estado:f.estado.value, nota:f.nota.value.trim(),
+    createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()
+  }, false);
+  cerrarDlg(); toast(id?'Envío actualizado':'Envío registrado');
+}
+
+function abrirLote(id){
+  const l= id? S.lotes.find(x=>x.id===id) : null;
+  abrirDlg(`
+  <div class="dlg-h"><h2>${l?'Editar compra':'Nueva compra de USDT'}</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <form id="fLote" class="dlg-b" autocomplete="off">
+    <div class="f2">
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(l?l.fecha:ahoraLocal())}"></div>
+      <div><label>CLP gastados en Binance</label><input name="clp" inputmode="numeric" required value="${l?l.clp:''}" oninput="App.calcLote()"></div>
+      <div><label>USDT comprados</label><input name="usdt" inputmode="decimal" required value="${l?l.usdt:''}" oninput="App.calcLote(true)"><div class="hint" id="tramoHint"></div></div>
+      <div><label>Bs recibidos al vender (puede quedar vacío)</label><input name="bs" inputmode="decimal" value="${l&&l.bs!=null?l.bs:''}" oninput="App.calcLote()"><div class="hint" id="bsHint"></div></div>
+      <div><label>USDT para el trabajador</label><input name="trab" inputmode="decimal" value="${l?l.usdtTrab:''}" oninput="App.calcLote()"></div>
+      <div><label>USDT para ti</label><input name="mio" inputmode="decimal" value="${l?l.usdtMio:''}" oninput="App.calcLote()"></div>
+    </div>
+    <label>Nota</label><input name="nota" value="${esc(l?l.nota||'':'')}">
+    <div class="calc" id="loteCalc"></div>
+  </form>
+  <div class="dlg-f">${l?`<button class="btn danger" onclick="App.borrar('lotes','${l.id}')">Eliminar</button>`:''}<span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cancelar</button><button class="btn pri" onclick="App.guardarLote(${l?`'${l.id}'`:'null'})">Guardar</button></div>`);
+  calcLote(!l);
+}
+function calcLote(autoTramo){
+  const f=document.getElementById('fLote'); if(!f) return;
+  const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
+  if(autoTramo && usdt>0){ const t=tramoPara(usdt); f.trab.value=t.trab; f.mio.value=t.mio; document.getElementById('tramoHint').textContent=`Tramo aplicado: ${t.trab} + ${t.mio} USDT`; }
+  const trab=parseNum(f.trab.value)||0, mio=parseNum(f.mio.value)||0;
+  const vend=usdt-trab-mio, precio=usdt>0?clp/usdt:null, cb=(+S.config.comisionBanco||0)/100, bsNet= bs>0? bs*(1-cb):null;
+  document.getElementById('bsHint').textContent= bs>0? '= '+fBs(bs) : '';
+  document.getElementById('loteCalc').innerHTML=`
+    <span>Precio USDT</span><b>${fCLP(precio)}</b>
+    <span>USDT a vender en Venezuela</span><b>${ok(vend)?nf2.format(vend):'—'}</b>
+    <span>Bs netos (−${S.config.comisionBanco}%)</span><b>${fBs(bsNet)}</b>
+    <span>Bs por USDT vendido</span><b>${bs>0&&vend>0?nf2.format(bs/vend):'—'}</b>
+    <span>Tasa de costo (Bs por CLP)</span><b>${bsNet&&clp?fT(bsNet/clp):'—'}</b>
+    <span>Tu ganancia en USDT</span><b class="pos">${precio?fCLP(mio*precio):'—'}</b>
+    <span>Costo trabajador</span><b>${precio?fCLP(trab*precio):'—'}</b>`;
+}
+function guardarLote(id){
+  const f=document.getElementById('fLote'); if(!f.reportValidity()) return;
+  const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
+  if(!(clp>0)) return toast('CLP inválido'); if(!(usdt>0)) return toast('USDT inválido');
+  const prev= id? S.lotes.find(x=>x.id===id) : null;
+  guardar('lotes', id||uid(), {fecha:f.fecha.value, clp, usdt, usdtTrab:parseNum(f.trab.value)||0, usdtMio:parseNum(f.mio.value)||0,
+    bs: bs>0? bs : null, nota:f.nota.value.trim(), createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()}, false);
+  cerrarDlg(); toast(id?'Compra actualizada':'Compra registrada');
+}
+
+function abrirCliente(id){
+  const c=S.clientes.find(x=>x.id===id); if(!c) return toast('Cliente no encontrado');
+  const a=C.cli[id]||{n:0,total:0,residual:0};
+  const es=C.E.filter(e=>e.clienteId===id).sort((x,y)=>(y.fecha||'').localeCompare(x.fecha||''));
+  const refs=S.clientes.filter(x=>x.referidoPor===id);
+  abrirDlg(`
+  <div class="dlg-h"><h2>${esc(c.nombre)}</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <div class="dlg-b">
+    <form id="fCli" class="f2" autocomplete="off">
+      <div><label>Nombre</label><input name="nombre" value="${esc(c.nombre)}"></div>
+      <div><label>RUT / documento</label><input value="${esc(c.rut||c.id)}" disabled></div>
+      <div><label>Teléfono</label><input name="telefono" value="${esc(c.telefono||'')}"></div>
+      <div><label>Nota</label><input name="nota" value="${esc(c.nota||'')}"></div>
+    </form>
+    <div class="calc">
+      <span>Envíos</span><b>${a.n}</b><span>Total enviado</span><b>${fCLP(a.total)}</b>
+      <span>Residual generado</span><b>${fCLP(a.residual)}</b><span>Promedio por envío</span><b>${fCLP(a.n?a.total/a.n:null)}</b>
+      <span>Último envío</span><b>${a.ultimo?fFecha(a.ultimo):'—'}</b><span>Origen</span><b>${c.referidoPor?'Referido por '+esc((S.clientes.find(x=>x.id===c.referidoPor)||{}).nombre||''):esc(c.origen||'—')}</b>
+      <span>Clientes que trajo</span><b>${refs.length}</b>
+    </div>
+    <h3 style="margin:16px 0 6px;font-size:14px">Beneficiarios</h3>
+    ${(c.beneficiarios||[]).length? `<ul class="list-plain small">${c.beneficiarios.map(b=>`<li>${esc(b.nombre)} · C.I. ${esc(b.cedula)} · ${esc(b.banco)} ${esc(b.cuenta)} ${esc(b.telefono)}</li>`).join('')}</ul>`:'<div class="muted small">Sin beneficiarios guardados.</div>'}
+    <h3 style="margin:16px 0 6px;font-size:14px">Historial</h3>
+    <div class="tablewrap"><table><thead><tr><th>Fecha</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th>Beneficiario</th><th>Estado</th></tr></thead>
+    <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')"><td>${fFecha(e.fecha)}</td><td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td><td class="n">${fBs(e.bs)}</td><td>${esc(e.beneficiario&&e.beneficiario.nombre)}</td><td><span class="badge ${e.estado==='pagado'?'ok':'warn'}">${e.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`).join('')||'<tr><td colspan="6" class="muted">Sin envíos</td></tr>'}</tbody></table></div>
+  </div>
+  <div class="dlg-f"><button class="btn danger" onclick="App.borrarCliente('${esc(c.id)}')">Eliminar</button><span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cerrar</button><button class="btn pri" onclick="App.guardarCliente('${esc(c.id)}')">Guardar</button></div>`);
+}
+function guardarCliente(id){ const f=document.getElementById('fCli'); guardar('clientes', id, {nombre:f.nombre.value.trim(), telefono:f.telefono.value.trim(), nota:f.nota.value.trim(), actualizado:Date.now()}, true); cerrarDlg(); toast('Cliente actualizado'); }
+function borrarCliente(id){
+  const n=S.envios.filter(e=>e.clienteId===id).length;
+  if(n) return toast(`Tiene ${n} envíos. Elimina primero sus envíos.`);
+  if(confirm('¿Eliminar este cliente?')){ eliminar('clientes',id); cerrarDlg(); }
+}
+function borrar(col,id){ if(confirm('¿Eliminar este registro? No se puede deshacer.')){ eliminar(col,id); cerrarDlg(); toast('Eliminado'); } }
+function toggleEstado(id){ const e=S.envios.find(x=>x.id===id); if(!e) return; guardar('envios', id, {estado: e.estado==='pagado'?'pendiente':'pagado', updatedAt:Date.now()}, true); }
+
+function guardarAjustes(){
+  const g=id=>document.getElementById(id).value;
+  const tramos=[...document.querySelectorAll('#tramosBody tr')].map(tr=>({
+    desde: parseNum(tr.querySelector('.tDesde').value)||0,
+    hasta: tr.querySelector('.tHasta').value.trim()===''? null : parseNum(tr.querySelector('.tHasta').value),
+    trab: parseNum(tr.querySelector('.tTrab').value)||0, mio: parseNum(tr.querySelector('.tMio').value)||0
+  })).sort((a,b)=>a.desde-b.desde);
+  const cfg={tasaDia:parseNum(g('cfTasa')), comisionBanco:parseNum(g('cfBanco')), metaUSD:parseInt0(g('cfMeta')), diasInactivo:parseInt0(g('cfDias')), dolarRef:parseInt0(g('cfDolar')), tramos};
+  for(const k of ['tasaDia','comisionBanco','metaUSD','diasInactivo','dolarRef']) if(!ok(cfg[k])) return toast('Valor inválido: '+k);
+  guardar('config','general',cfg,false); toast('Ajustes guardados');
+}
+function addTramo(){ document.getElementById('tramosBody').insertAdjacentHTML('beforeend', filaTramo({desde:'',hasta:'',trab:0,mio:0})); }
+
+/* ---------- exportar / importar ---------- */
+function exportJSON(){
+  const data={version:1, exportado:new Date().toISOString(), clientes:S.clientes, envios:S.envios, lotes:S.lotes, config:S.config};
+  descargar(`remesas-respaldo-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(data,null,2), 'application/json');
+}
+function csv(rows){ return '\ufeff'+rows.map(r=>r.map(v=>{ const s=v==null?'':String(v); return /[;"\n]/.test(s)? '"'+s.replace(/"/g,'""')+'"' : s; }).join(';')).join('\n'); }
+const dec=n=> ok(n)? String(Math.round(n*100)/100).replace('.',',') : '';
+function exportCSV(tipo){
+  let rows;
+  if(tipo==='envios') rows=[['Fecha','Cliente','RUT','CLP','Tasa','Bs','Costo CLP','Residual CLP','Beneficiario','Cédula','Banco','Cuenta','Estado','Comprobante','Nota'],
+    ...C.E.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>[e.fecha,e.clienteNombre,e.clienteRut,e.clp,String(e.tasa).replace('.',','),dec(e.bs),dec(e.costo),dec(e.residual),e.beneficiario&&e.beneficiario.nombre,e.beneficiario&&e.beneficiario.cedula,e.beneficiario&&e.beneficiario.banco,e.beneficiario&&e.beneficiario.cuenta,e.estado,e.comprobante,e.nota])];
+  else if(tipo==='lotes') rows=[['Fecha','CLP','USDT','Precio USDT','USDT trabajador','USDT tuyos','USDT vendidos','Bs recibidos','Bs netos','Tasa costo','Ganancia USDT CLP','Nota'],
+    ...C.L.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(l=>[l.fecha,l.clp,dec(l.usdt),dec(l.precio),dec(l.trab),dec(l.mio),dec(l.vend),l.tieneBs?dec(l.bs):'',l.tieneBs?dec(l.bsNet):'',l.tasaCosto?String(l.tasaCosto.toFixed(6)).replace('.',','):'',dec(l.ganUSDT),l.nota])];
+  else rows=[['RUT','Nombre','Teléfono','Origen','Referido por','Envíos','Total CLP','Residual CLP','Último envío','Días sin enviar'],
+    ...S.clientes.map(c=>{ const a=C.cli[c.id]||{}; return [c.rut||c.id,c.nombre,c.telefono,c.origen,(S.clientes.find(x=>x.id===c.referidoPor)||{}).nombre||'',a.n||0,a.total||0,dec(a.residual||0),a.ultimo||'',a.dias??'']; })];
+  descargar(`remesas-${tipo}-${new Date().toISOString().slice(0,10)}.csv`, csv(rows), 'text/csv;charset=utf-8');
+}
+async function importJSON(file){
+  if(!file) return;
+  try{
+    const d=JSON.parse(await file.text()); const items=[];
+    ['clientes','envios','lotes'].forEach(c=> (d[c]||[]).forEach(o=>{ const {id,...rest}=o; if(id) items.push({col:c,id,data:rest}); }));
+    if(d.config) items.push({col:'config',id:'general',data:d.config});
+    if(!items.length) return toast('El archivo no tiene datos');
+    if(!confirm(`Se importarán ${items.length} registros. ¿Continuar?`)) return;
+    await Store.batchSet(items); toast('Importación lista');
+  }catch(e){ toast('Archivo inválido: '+e.message); }
+}
+
+/* ============================================================
+   5) ARRANQUE
+   ============================================================ */
+function startData(){
+  stopData();
+  ['clientes','envios','lotes'].forEach(c=> unsubs.push(Store.listen(c, docs=>{ S[c]=docs; render(); })));
+  unsubs.push(Store.listen('config', docs=>{ const g=docs.find(d=>d.id==='general'); S.config={...structuredClone(DEFAULT_CONFIG), ...(g||{})}; delete S.config.id; render(); }));
+}
+function stopData(){ unsubs.forEach(u=>{ try{u&&u()}catch(e){} }); unsubs=[]; }
+function mostrar(v){ ['loginView','appView','loadingView'].forEach(x=> document.getElementById(x).classList.toggle('hidden', x!==v)); }
+
+document.getElementById('tabs').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b) go(b.dataset.v); });
+document.getElementById('mesSel').addEventListener('change', e=>{ S.mes=e.target.value; render(); });
+
+window.App = {
+  go, cerrar:cerrarDlg, abrirEnvio, abrirLote, abrirCliente, rutInput, usarBen, calcEnvio, calcLote,
+  guardarEnvio, guardarLote, guardarCliente, borrarCliente, borrar, toggleEstado, guardarAjustes, addTramo,
+  exportJSON, exportCSV, importJSON,
+  buscar(v){ S.q=v; S._focusQ=true; render(); }, setEstado(v){ S.estado=v; render(); }, setInactivos(v){ S.soloInactivos=v; render(); },
+  async salir(){ await Store.logout(); }
+};
+
+async function main(){
+  const badge=document.getElementById('modeBadge');
+  if(MODO_LOCAL){
+    Store=LocalStore; await Store.init();
+    badge.textContent='Modo local'; badge.className='badge warn'; badge.title='Datos solo en este navegador. Configura Firebase para sincronizar.';
+    startData(); mostrar('appView'); return;
+  }
+  Store=FireStore;
+  FireStore.onAuth=u=>{
+    if(u){ S.email=u.email; badge.textContent='En línea'; badge.className='badge ok'; startData(); mostrar('appView'); }
+    else { stopData(); mostrar('loginView'); }
+  };
+  try{ await Store.init(); }
+  catch(e){ document.getElementById('loadingView').innerHTML=`<div class="card"><b>No se pudo cargar Firebase.</b><p class="muted small">${esc(e.message)}</p></div>`; return; }
+  window.addEventListener('online', ()=>{ badge.textContent='En línea'; badge.className='badge ok'; });
+  window.addEventListener('offline',()=>{ badge.textContent='Sin conexión (se sincroniza al volver)'; badge.className='badge warn'; });
+  document.getElementById('loginForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const err=document.getElementById('lgErr'); err.textContent='';
+    try{ await Store.login(document.getElementById('lgEmail').value.trim(), document.getElementById('lgPass').value); }
+    catch(e){ err.textContent= e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'||e.code==='auth/user-not-found' ? 'Correo o contraseña incorrectos' : 'Error: '+(e.code||e.message); }
+  });
+}
+main();
+</script>
+</body>
+</html>
