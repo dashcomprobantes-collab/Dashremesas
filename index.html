@@ -1,33 +1,59 @@
 <!doctype html>
-<!-- Remesas · Control · v5 -->
+<!-- DASH Remesas · Envíos sin fronteras · v6 -->
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14287a">
-<title>Remesas · Control</title>
+<title>DASH Remesas · Envíos sin fronteras</title>
 <style>
-:root{--bg:#f3f5fb;--card:#fff;--text:#0f1a3d;--muted:#5a6688;--line:#dfe4f1;--brand:#1d3fb0;--brand-2:#14287a;--brand-soft:#e5ebfc;--on-brand:#fff;--gold:#c9a227;--gold-2:#e2c35a;--gold-soft:#fbf3da;--gold-text:#7d600c;--ok:#15803d;--ok-soft:#dcfce7;--warn:#a35a06;--warn-soft:#fdf0d2;--bad:#b91c1c;--bad-soft:#fee2e2;--chip:#eef1f9;--shadow:0 1px 2px rgba(15,26,61,.05),0 3px 10px rgba(15,26,61,.06)}
-@media (prefers-color-scheme:dark){:root{--bg:#081032;--card:#0f1a47;--text:#eef1fa;--muted:#a4afd3;--line:#22306a;--brand:#7b97ff;--brand-2:#0b1640;--brand-soft:#1a2a6b;--on-brand:#081032;--gold:#e2c35a;--gold-2:#f0d784;--gold-soft:#332b10;--gold-text:#e9cc6c;--ok:#4ade80;--ok-soft:#123222;--warn:#fbbf24;--warn-soft:#3a2d0d;--bad:#f87171;--bad-soft:#3b1515;--chip:#16235a;--shadow:none}}
+:root{--page-bg:#f3f5fb;--on-page:#0f1a3d;--on-page-muted:#5a6688;--bg:#f3f5fb;--card:#fff;--text:#0f1a3d;--muted:#5a6688;--line:#dfe4f1;--brand:#1d3fb0;--brand-2:#14287a;--brand-soft:#e5ebfc;--on-brand:#fff;--gold:#c9a227;--gold-2:#e2c35a;--gold-soft:#fbf3da;--gold-text:#7d600c;--ok:#15803d;--ok-soft:#dcfce7;--warn:#a35a06;--warn-soft:#fdf0d2;--bad:#b91c1c;--bad-soft:#fee2e2;--chip:#eef1f9;--shadow:0 1px 2px rgba(15,26,61,.05),0 3px 10px rgba(15,26,61,.06)}
+@media (prefers-color-scheme:dark){:root{--page-bg:#081032;--on-page:#eef1fa;--on-page-muted:#a4afd3;--bg:#081032;--card:#0f1a47;--text:#eef1fa;--muted:#a4afd3;--line:#22306a;--brand:#7b97ff;--brand-2:#0b1640;--brand-soft:#1a2a6b;--on-brand:#081032;--gold:#e2c35a;--gold-2:#f0d784;--gold-soft:#332b10;--gold-text:#e9cc6c;--ok:#4ade80;--ok-soft:#123222;--warn:#fbbf24;--warn-soft:#3a2d0d;--bad:#f87171;--bad-soft:#3b1515;--chip:#16235a;--shadow:none}}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html,body{margin:0;color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+/* v6: fondo de pantalla. --page-bg solo se usa aquí (los campos usan --bg). El fondo del body se propaga a toda la ventana. */
+body{background:var(--page-bg);background-attachment:fixed;min-height:100vh}
+@media (prefers-color-scheme:light){
+  body[data-fondo="original"]{--page-bg:#f3f5fb}
+  body[data-fondo="azul-hielo"]{--page-bg:#e6ecfb}
+  body[data-fondo="rey-suave"]{--page-bg:linear-gradient(180deg,#d6e0fa 0%,#eef2fc 45%,#f6f8fd 100%)}
+  body[data-fondo="marfil"]{--page-bg:#f8f2e1}
+  body[data-fondo="azul-oro"]{--page-bg:linear-gradient(160deg,#dfe6fb 0%,#eef1f8 50%,#f7efd6 100%)}
+  body[data-fondo="pizarra"]{--page-bg:#d3dbef}
+  body[data-fondo="rey-profundo"]{--page-bg:linear-gradient(180deg,#14287a 0%,#1d3fb0 100%);--on-page:#f3f6ff;--on-page-muted:#c9d3f5}
+  body[data-fondo="rey-profundo"] .kpi.hero{border-color:var(--gold)}
+  body[data-fondo="rey-profundo"] .alert{box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+  body[data-fondo="rey-profundo"] .login .card{box-shadow:0 6px 24px rgba(0,0,0,.35)}
+}
+/* textos que van directo sobre el fondo (no dentro de una tarjeta) */
+main>.row,main>.row .muted,main>p.muted,label.chk{color:var(--on-page-muted)}
+main>.row b,h2.sectit{color:var(--on-page)}
+h2.sectit{font-size:16px;margin:18px 0 10px}
+h2.sectit:first-child{margin-top:0}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--brand)}
 .hidden{display:none!important}
-header{position:sticky;top:0;z-index:20;background:linear-gradient(120deg,#14287a 0%,#1d3fb0 70%,#2347c4 100%);border-bottom:3px solid var(--gold);padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#fff}
-header h1{font-size:17px;margin:0;flex:1;min-width:120px;display:flex;align-items:center;gap:9px;letter-spacing:.01em}
-header h1 .logo{width:28px;height:28px;flex:none}
-header h1 span.g{color:var(--gold-2)}
-header select{width:auto;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(120deg,#14287a 0%,#1d3fb0 70%,#2347c4 100%);border-bottom:3px solid var(--gold);padding:9px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#fff}
+header h1{margin:0;flex:1;display:flex;align-items:center;gap:9px}
+header h1 .logo{width:30px;height:30px;flex:none}
+header h1 .marca{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+header h1 .marca b{font-size:17px;font-weight:800;color:#fff;letter-spacing:.01em;white-space:nowrap}
+header h1 .marca small{font-size:11.5px;font-weight:600;color:var(--gold-2);letter-spacing:.03em;white-space:nowrap}
+header select{width:auto;font-size:13px;line-height:1.3;padding:3px 8px;border-radius:7px;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff}
 header select option{color:#0f1a3d}
 .badge{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--muted);white-space:nowrap}
 .badge.ok{background:var(--ok-soft);color:var(--ok)}.badge.warn{background:var(--warn-soft);color:var(--warn)}.badge.bad{background:var(--bad-soft);color:var(--bad)}.badge.brand{background:var(--brand-soft);color:var(--brand)}
-nav.tabs{display:flex;gap:2px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:56px;z-index:19;overflow-x:auto}
+nav.tabs{display:flex;gap:2px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:var(--hdr-h,56px);z-index:19;overflow-x:auto}
 nav.tabs button{border:0;background:none;padding:12px 12px 10px;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent}
 nav.tabs button.on{color:var(--brand);font-weight:700;border-bottom-color:var(--gold)}
-main{max-width:1100px;margin:0 auto;padding:16px 16px 120px}
+main{max-width:1100px;margin:0 auto;padding:16px 16px calc(130px + env(safe-area-inset-bottom))}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 @media (max-width:640px){.grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}}
+/* v6: Dashboard en 3 columnas (2 en teléfono); si el número de tarjetas es impar, la de ganancia ocupa la fila completa */
+.grid.dash{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid.dash.impar>.hero{grid-column:1/-1}
+@media (max-width:640px){.grid.dash{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.dash.impar>.hero{grid-column:1/-1}}
+.kpi .v{overflow-wrap:anywhere}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-width:0}
 .card h3{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:600}
 .kpi .v{font-size:24px;font-weight:700;letter-spacing:-.01em}
@@ -45,6 +71,7 @@ main{max-width:1100px;margin:0 auto;padding:16px 16px 120px}
 .progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));border-radius:99px}
 .kpi.hero{background:linear-gradient(135deg,#14287a,#1d3fb0);border-color:#14287a;color:#fff}
 .kpi.hero h3,.kpi.hero .s{color:#c9d3f5}.kpi.hero .v{color:var(--gold-2)}
+.kpi.hero .tot{margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.22);font-size:14px;color:#fff}.kpi.hero .tot b{color:var(--gold-2)}.kpi.hero .tot b.neg{color:#fca5a5}
 .kpi.gold{border-top:3px solid var(--gold)}
 .stockbar{height:6px;background:var(--chip);border-radius:99px;overflow:hidden;min-width:70px;margin-top:4px}
 .stockbar>i{display:block;height:100%;background:var(--brand)}
@@ -76,8 +103,9 @@ label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .calc b{text-align:right;font-variant-numeric:tabular-nums}
 .alert{padding:10px 12px;border-radius:10px;margin-bottom:8px;font-size:14px}
 .alert.warn{background:var(--warn-soft);color:var(--warn)}.alert.bad{background:var(--bad-soft);color:var(--bad)}.alert.info{background:var(--brand-soft);color:var(--brand)}
-.fab{position:fixed;right:16px;bottom:18px;z-index:30;display:flex;gap:8px}
-.fab .btn{box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;display:flex;gap:10px}
+.fab .btn{box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:20px;line-height:1.6;padding:13px 22px;border-radius:12px;white-space:nowrap}
+@media (max-width:380px){.fab{right:12px;gap:8px}.fab .btn{padding:13px 18px}}
 dialog{border:0;border-radius:14px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--card);color:var(--text)}
 dialog::backdrop{background:rgba(0,0,0,.45)}
 .dlg-h{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:2}
@@ -85,21 +113,31 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .dlg-b{padding:4px 16px 16px}
 .dlg-f{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--card)}
 .x{border:0;background:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
-#toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#14287a;border:1px solid var(--gold);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#14287a;border:1px solid var(--gold);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
 #toast.on{opacity:1}
 .login{max-width:380px;margin:12vh auto;padding:0 16px}
 .chart svg{width:100%;height:auto;display:block}
 .chart text{fill:var(--muted);font-size:11px}
 .list-plain{margin:0;padding-left:18px}
 .estado{border:0;cursor:pointer}
-@media (max-width:640px){header h1{font-size:16px}.kpi .v{font-size:21px}nav.tabs{top:auto}}
+/* v6: selector de fondo */
+.fondos{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.fondo-op{border:2px solid var(--line);border-radius:12px;padding:0;background:var(--card);cursor:pointer;overflow:hidden;text-align:left}
+.fondo-op .mu{height:64px;padding:10px;display:flex;flex-direction:column;gap:6px;background-attachment:scroll}
+.fondo-op .mu i{display:block;height:14px;width:70%;border-radius:4px;background:#fff;box-shadow:0 1px 2px rgba(15,26,61,.15)}
+.fondo-op .mu i+i{width:45%;background:#c9a227}
+.fondo-op span{display:block;padding:6px 8px;font-size:12.5px;font-weight:600;border-top:1px solid var(--line)}
+.fondo-op[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.fondo-op[aria-pressed="true"] span::after{content:" ✓";color:var(--gold-text)}
+@media (max-width:640px){header{padding:8px 12px;gap:8px}header h1 .marca b{font-size:16px}header h1 .logo{width:28px;height:28px}.kpi .v{font-size:21px}nav.tabs{top:auto}}
+@media (max-width:400px){header{padding:8px 10px}header h1{gap:6px}header h1 .logo{width:26px;height:26px}header h1 .marca b{font-size:15px}header h1 .marca small{font-size:10.5px;letter-spacing:.01em}header select{max-width:104px;padding:3px 6px}#modeBadge{font-size:11px;padding:2px 6px}}
 </style>
 </head>
 <body>
 
 <div id="loginView" class="login hidden">
   <div class="card" style="border-top:4px solid var(--gold)">
-    <h2 style="margin-top:0;display:flex;align-items:center;gap:10px;color:var(--brand)"><svg class="logo" width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#14287a" stroke="#c9a227" stroke-width="2"/><path d="M9 19.5l7-9 7 9" fill="none" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 23h10" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round"/></svg>Remesas · Control</h2>
+    <h2 style="margin-top:0;display:flex;align-items:center;gap:10px;color:var(--brand)"><svg class="logo" width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#14287a" stroke="#c9a227" stroke-width="2"/><path d="M9 19.5l7-9 7 9" fill="none" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 23h10" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round"/></svg><span style="line-height:1.15">DASH Remesas<small style="display:block;font-size:13px;font-weight:600;color:var(--gold-text);letter-spacing:.03em">Envíos sin fronteras</small></span></h2>
     <p class="muted small">Inicia sesión con el usuario que creaste en Firebase.</p>
     <form id="loginForm">
       <label>Correo</label><input id="lgEmail" type="email" autocomplete="username" required>
@@ -112,14 +150,15 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <div id="appView" class="hidden">
   <header>
-    <h1><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#0b1a5c" stroke="#c9a227" stroke-width="2"/><path d="M9 19.5l7-9 7 9" fill="none" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 23h10" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round"/></svg>Remesas <span class="g">· Control</span></h1>
+    <h1><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#0b1a5c" stroke="#c9a227" stroke-width="2"/><path d="M9 19.5l7-9 7 9" fill="none" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 23h10" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round"/></svg><span class="marca"><b>DASH Remesas</b><small>Envíos sin fronteras</small></span></h1>
     <select id="mesSel"></select>
     <span id="modeBadge" class="badge"></span>
   </header>
   <nav class="tabs" id="tabs">
-    <button data-v="inicio">Inicio</button>
+    <button data-v="inicio">Dashboard</button>
     <button data-v="envios">Envíos</button>
     <button data-v="compras">Compras y stock</button>
+    <button data-v="estadisticas">Estadísticas</button>
     <button data-v="clientes">Clientes</button>
     <button data-v="ajustes">Ajustes</button>
   </nav>
@@ -170,6 +209,7 @@ const DEFAULT_CONFIG = {
   metaUSD: 5000,
   diasInactivo: 30,
   dolarRef: 920,
+  fondo: 'azul-hielo',   // v6: fondo de pantalla (ver FONDOS)
   tramos: [
     {desde:0,   hasta:200,  trab:0,  mio:0},
     {desde:200, hasta:300,  trab:5,  mio:5},
@@ -177,6 +217,28 @@ const DEFAULT_CONFIG = {
     {desde:450, hasta:null, trab:15, mio:15}
   ]
 };
+
+// v6: fondos de pantalla disponibles (solo modo claro; en modo oscuro se mantiene el fondo oscuro)
+const FONDOS = [
+  {k:'azul-hielo',   n:'Azul hielo',          css:'#e6ecfb'},
+  {k:'rey-suave',    n:'Azul rey suave',      css:'linear-gradient(180deg,#d6e0fa 0%,#eef2fc 45%,#f6f8fd 100%)'},
+  {k:'marfil',       n:'Marfil dorado',       css:'#f8f2e1'},
+  {k:'azul-oro',     n:'Azul y oro',          css:'linear-gradient(160deg,#dfe6fb 0%,#eef1f8 50%,#f7efd6 100%)'},
+  {k:'pizarra',      n:'Pizarra azul',        css:'#d3dbef'},
+  {k:'rey-profundo', n:'Azul rey profundo',   css:'linear-gradient(180deg,#14287a 0%,#1d3fb0 100%)'},
+  {k:'original',     n:'Original',            css:'#f3f5fb'}
+];
+const FONDO_CACHE='remesas_fondo';
+function aplicarFondo(k){
+  if(!FONDOS.some(f=>f.k===k)) k=DEFAULT_CONFIG.fondo;
+  document.body.dataset.fondo=k;
+  try{ localStorage.setItem(FONDO_CACHE,k); }catch(e){}
+}
+// muestra el último fondo usado mientras cargan los datos (y en la pantalla de inicio de sesión)
+try{ aplicarFondo(localStorage.getItem(FONDO_CACHE)||DEFAULT_CONFIG.fondo); }catch(e){ aplicarFondo(DEFAULT_CONFIG.fondo); }
+// las pestañas fijas se ubican justo debajo del encabezado, aunque cambie su altura
+(()=>{ const h=document.querySelector('header'); if(!h) return; const fij=()=>{ if(h.offsetHeight) document.documentElement.style.setProperty('--hdr-h',h.offsetHeight+'px'); };
+  if(window.ResizeObserver) new ResizeObserver(fij).observe(h); window.addEventListener('resize',fij); fij(); })();
 
 const S = {clientes:[], envios:[], lotes:[], config:structuredClone(DEFAULT_CONFIG), view:'inicio', mes:mesActual(), q:'', estado:'todos', soloInactivos:false};
 let C = null;           // resultados de cálculos
@@ -382,7 +444,7 @@ function _render(){
   document.querySelectorAll('#tabs button').forEach(b=> b.classList.toggle('on', b.dataset.v===S.view));
   document.getElementById('dlClientes').innerHTML=S.clientes.map(c=>`<option value="${esc(c.rut||c.id)}">${esc(c.nombre)}</option>`).join('');
   const v=document.getElementById('view');
-  v.innerHTML=({inicio:vInicio,envios:vEnvios,compras:vCompras,clientes:vClientes,ajustes:vAjustes}[S.view]||vInicio)();
+  v.innerHTML=({inicio:vInicio,envios:vEnvios,compras:vCompras,estadisticas:vEstadisticas,clientes:vClientes,ajustes:vAjustes}[S.view]||vInicio)();
   if(S.view==='envios'||S.view==='clientes'){ const q=document.getElementById('q'); if(q&&S._focusQ){ q.focus(); q.setSelectionRange(q.value.length,q.value.length); } }
 }
 function go(vw){ S.view=vw; S._focusQ=false; render(); window.scrollTo(0,0); }
@@ -421,20 +483,17 @@ function vInicio(){
   if(C.lotesSinBs.length) alerts.push(`<div class="alert info">${C.lotesSinBs.length} compra(s) sin Bs recibidos registrados (${fUSDT(C.usdtPorVender)} por vender). <a href="#" onclick="App.go('compras');return false">Completar</a></div>`);
   const activos=C.L.filter(l=>l.tieneBs&&l.restante>0).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   const alcanza= td? C.stockBs/td : null;
+  const nCards= 6 + (hayPendientes()?1:0);
   return `
   ${alerts.join('')}
-  <div class="grid">
-    <div class="card kpi hero"><h3>Ganancia · ${fMes(S.mes)}</h3><div class="v ${r.ganancia<0?'neg':''}">${fCLP(r.ganancia)}</div><div class="s">≈ ${fUSD(ganUSD)} · USDT propios ${fCLP(r.ganUSDT)} · residual ${fCLP(r.residual)}</div></div>
+  <div class="grid dash ${nCards%2?'impar':''}">
+    <div class="card kpi hero"><h3>Ganancia USDT · ${fMes(S.mes)}</h3><div class="v ${r.ganUSDT<0?'neg':''}">${fCLP(r.ganUSDT)}</div><div class="s">≈ ${fUSD(r.ganUSDT/usd)} · tus USDT de cada compra × precio del USDT</div><div class="tot">Total con residual: <b class="${r.ganancia<0?'neg':''}">${fCLP(r.ganancia)}</b> (${fUSD(ganUSD)}) · residual ${fCLP(r.residual)}</div></div>
     <div class="card kpi gold"><h3>Stock en Venezuela</h3><div class="v">${fBs(C.stockBs)}</div><div class="s">≈ ${fUSDT(C.usdtEnStock)} · alcanza para ≈ ${fCLP(alcanza)} a la tasa del día${C.usdtPorVender?` · ${fUSDT(C.usdtPorVender)} por vender`:''}</div></div>
     <div class="card kpi"><h3>Meta mensual</h3><div class="v">${Math.round(pctMeta*100)}%</div><div class="progress"><i style="width:${pctMeta*100}%"></i></div><div class="s">${fUSD(ganUSD)} de ${fUSD(meta)}${S.mes?'':' (historial total)'}</div></div>
     <div class="card kpi"><h3>Volumen enviado</h3><div class="v">${fCLP(r.vol)}</div><div class="s">${r.n} envíos · ticket promedio ${fCLP(ticket)}</div></div>
     <div class="card kpi"><h3>Margen real</h3><div class="v">${fPct(r.margen)}</div><div class="s">Ganancia ÷ volumen enviado</div></div>
     <div class="card kpi"><h3>Clientes</h3><div class="v">${r.nClientes||0}</div><div class="s">activos en el período · ${r.nuevos||0} nuevos · ${inact} inactivos (+${S.config.diasInactivo} días)</div></div>
-    <div class="card kpi"><h3>Comisión trabajador</h3><div class="v">${fUSDT(r.trabUSDT)}</div><div class="s">${r.trabBs?`+ ${fBs(r.trabBs)} en compras de Bs · `:''}≈ ${fCLP(r.trabCLP)} en total · ${r.compras} compras USDT${r.comprasBs?` · ${r.comprasBs} de Bs`:''}</div></div>
-    <div class="card kpi"><h3>Compras directas de Bs</h3><div class="v">${fBs(r.bsNetBs)}</div><div class="s">${r.comprasBs? `netos · ${r.comprasBs} compras · pagaste ${fCLP(r.clpBs)} · ${fPct(r.bsNetBs/(r.bsNetBs+r.bsNetUsdt))} de los Bs del período` : 'Sin compras de Bs en el período'}</div></div>
-    <div class="card kpi"><h3>Tasa de costo: compra de Bs</h3><div class="v">${fT(r.clpBs? r.bsNetBs/r.clpBs : null)}</div><div class="s">Bs netos por CLP · vía USDT: <b>${fT(r.clpUsdtConBs? r.bsNetUsdt/r.clpUsdtConBs : null)}</b>${r.comprasBs&&r.ahorroBs?` · ${r.ahorroBs>=0?'ahorro':'sobrecosto'} vs USDT ${fCLP(Math.abs(r.ahorroBs))}`:''}</div></div>
     ${C.E.some(e=>e.estado!=='pagado')? `<div class="card kpi"><h3>Pendientes por pagar</h3><div class="v">${fBs(C.bsPend)}</div><div class="s">${C.E.filter(e=>e.estado!=='pagado').length} envíos sin marcar como pagados</div></div>` : ''}
-    <div class="card kpi"><h3>Tasa de costo del stock</h3><div class="v">${fT(ta)}</div><div class="s">Bs por CLP · última compra ${fT(C.ultimoConBs&&C.ultimoConBs.tasaCosto)}</div></div>
   </div>
 
   <div class="sec card">
@@ -468,7 +527,7 @@ function filtrarEnvios(){
 }
 function vEnvios(){
   const hp=hayPendientes(); if(!hp) S.estado='todos';
-  const es=filtrarEnvios(); const t=es.reduce((a,e)=>({clp:a.clp+e.clp,bs:a.bs+e.bs,res:a.res+(e.residual||0)}),{clp:0,bs:0,res:0});
+  const es=filtrarEnvios(); const t=es.reduce((a,e)=>({clp:a.clp+e.clp,bs:a.bs+e.bs}),{clp:0,bs:0});
   return `
   <div class="row" style="margin-bottom:10px">
     <input id="q" placeholder="Buscar cliente, RUT, beneficiario…" value="${esc(S.q)}" style="max-width:320px" oninput="App.buscar(this.value)">
@@ -480,16 +539,16 @@ function vEnvios(){
     <span class="spacer"></span><span class="muted small">${es.length} envíos · ${fMes(S.mes)}</span>
   </div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Fecha</th><th>Cliente</th><th>Beneficiario</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th class="n">Residual</th>${hp?'<th>Estado</th>':''}</tr></thead>
+    <thead><tr><th>Fecha</th><th>Cliente</th><th>Beneficiario</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th>${hp?'<th>Estado</th>':''}</tr></thead>
     <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')">
       <td>${fFecha(e.fecha)}</td><td>${esc(e.clienteNombre)}<div class="muted small">${esc(e.clienteRut)}</div></td>
       <td>${esc(e.beneficiario&&e.beneficiario.nombre)}<div class="muted small">${esc(e.beneficiario&&e.beneficiario.banco)}</div></td>
-      <td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td><td class="n">${fBs(e.bs)}</td>
-      <td class="n ${e.residual<0?'neg':''}">${e.falta? `<span class="badge bad">faltan ${fBs(e.falta)}</span>` : e.residual==null?'<span class="muted">—</span>' : fCLP(e.residual)}${e.partes.length>1?`<div class="muted small">${e.partes.length} compras</div>`:''}</td>
-      ${hp?`<td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td>`:''}</tr>`).join('') || `<tr><td colspan="${hp?8:7}" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
-    ${es.length?`<tfoot><tr><td colspan="3">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td><td class="n">${fCLP(t.res)}</td>${hp?'<td></td>':''}</tr></tfoot>`:''}
+      <td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td>
+      <td class="n">${fBs(e.bs)}${e.falta?`<div><span class="badge bad">faltan ${fBs(e.falta)}</span></div>`:''}${e.partes.length>1?`<div class="muted small">${e.partes.length} compras</div>`:''}</td>
+      ${hp?`<td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td>`:''}</tr>`).join('') || `<tr><td colspan="${hp?7:6}" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
+    ${es.length?`<tfoot><tr><td colspan="3">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td>${hp?'<td></td>':''}</tr></tfoot>`:''}
   </table></div>
-  <p class="muted small">“Faltan Bs”: el stock no alcanzó para ese envío; su residual aparece al registrar la compra que lo cubre. “2 compras”: el envío usó Bs de dos compras, cada parte con su tasa.${hp?' Toca el estado para marcar pagado/pendiente.':''}</p>`;
+  <p class="muted small">“Faltan X Bs”: el stock no alcanzó para cubrir ese envío; se completa solo al registrar la compra que lo cubre. “2 compras”: el envío usó Bs de dos compras, cada parte con su tasa. El residual de cada envío (CLP cobrados − costo de los Bs) se ve en Estadísticas, en el detalle del cliente y en la exportación CSV.${hp?' Toca el estado para marcar pagado/pendiente.':''}</p>`;
 }
 
 function vCompras(){
@@ -503,7 +562,7 @@ function vCompras(){
   const badge=l=>({ 'por vender':'warn', 'agotada':'', 'en uso':'gold', 'disponible':'ok' }[l.estadoStock]);
   return `
   <div class="grid" style="margin-bottom:12px">
-    <div class="card kpi"><h3>Vía USDT (Binance)</h3><div class="v">${fBs(tUS.bsNet)}</div><div class="s">netos · ${tUS.n} compras · ${fCLP(tUS.clp)} · tasa costo ${fT(tUS.clpConBs? tUS.bsNet/tUS.clpConBs : null)}</div></div>
+    <div class="card kpi"><h3>Vía USDT (Binance)</h3><div class="v">${fUSDT(tUS.usdt)}</div><div class="s">comprados · ${tUS.n} compras · ${fCLP(tUS.clp)} pagados · precio prom. ${fCLP(tUS.usdt? tUS.clp/tUS.usdt : null)}/USDT · → ${fBs(tUS.bsNet)} netos · tasa costo ${fT(tUS.clpConBs? tUS.bsNet/tUS.clpConBs : null)}</div></div>
     <div class="card kpi gold"><h3>Compra directa de Bs</h3><div class="v">${fBs(tBZ.bsNet)}</div><div class="s">netos · ${tBZ.n} compras · ${fCLP(tBZ.clp)} · tasa costo ${fT(tBZ.clp? tBZ.bsNet/tBZ.clp : null)}</div></div>
     <div class="card kpi"><h3>Bs comprados directo</h3><div class="v">${fPct(bsNetTot? tBZ.bsNet/bsNetTot : null)}</div><div class="s">del total de Bs netos del período${tBZ.n&&tBZ.ahorro?` · ${tBZ.ahorro>=0?'ahorro':'sobrecosto'} vs USDT ${fCLP(Math.abs(tBZ.ahorro))}`:''}</div></div>
   </div>
@@ -525,6 +584,37 @@ function vCompras(){
   <p class="muted small">Tasa de costo = Bs netos ÷ CLP gastados. En compras de USDT: Bs netos = Bs recibidos × (1 − ${S.config.comisionBanco}%). En compras directas de Bs: Bs netos = (Bs recibidos − Bs del trabajador) × (1 − ${S.config.comisionBanco}%). Los envíos consumen primero el stock de la compra más antigua, sin importar el tipo. “Ahorro vs USDT” = lo que te habría costado conseguir esos mismos Bs con tu última compra de USDT, menos lo que pagaste. Es informativo: esa diferencia ya está dentro del residual de los envíos, no se suma otra vez a la ganancia.</p>`;
 }
 
+function vEstadisticas(){
+  const r=resumen(S.mes), ta=C.tasaActual;
+  // residual de los envíos del período (solo los que ya tienen costo; los que tienen "faltan Bs" quedan fuera hasta que se cubran)
+  const es=C.E.filter(e=>!S.mes||e.mes===S.mes);
+  const con=es.filter(e=>e.residual!=null), sinCosto=es.length-con.length;
+  const totRes=con.reduce((s,e)=>s+e.residual,0), volCon=con.reduce((s,e)=>s+e.clp,0);
+  const neg=con.filter(e=>e.residual<0), totNeg=neg.reduce((s,e)=>s+e.residual,0);
+  const top=[...con].sort((a,b)=>b.residual-a.residual).slice(0,10);
+  return `
+  <h2 class="sectit">Compras y comisiones · ${fMes(S.mes)}</h2>
+  <div class="grid">
+    <div class="card kpi"><h3>Comisión trabajador</h3><div class="v">${fUSDT(r.trabUSDT)}</div><div class="s">${r.trabBs?`+ ${fBs(r.trabBs)} en compras de Bs · `:''}≈ ${fCLP(r.trabCLP)} en total · ${r.compras} compras USDT${r.comprasBs?` · ${r.comprasBs} de Bs`:''}</div></div>
+    <div class="card kpi"><h3>Compras directas de Bs</h3><div class="v">${fBs(r.bsNetBs)}</div><div class="s">${r.comprasBs? `netos · ${r.comprasBs} compras · pagaste ${fCLP(r.clpBs)} · ${fPct(r.bsNetBs/(r.bsNetBs+r.bsNetUsdt))} de los Bs del período` : 'Sin compras de Bs en el período'}</div></div>
+    <div class="card kpi"><h3>Tasa de costo: compra de Bs</h3><div class="v">${fT(r.clpBs? r.bsNetBs/r.clpBs : null)}</div><div class="s">Bs netos por CLP · vía USDT: <b>${fT(r.clpUsdtConBs? r.bsNetUsdt/r.clpUsdtConBs : null)}</b>${r.comprasBs&&r.ahorroBs?` · ${r.ahorroBs>=0?'ahorro':'sobrecosto'} vs USDT ${fCLP(Math.abs(r.ahorroBs))}`:''}</div></div>
+    <div class="card kpi"><h3>Tasa de costo del stock</h3><div class="v">${fT(ta)}</div><div class="s">Bs por CLP · última compra ${fT(C.ultimoConBs&&C.ultimoConBs.tasaCosto)}</div></div>
+  </div>
+
+  <h2 class="sectit">Residual de los envíos · ${fMes(S.mes)}</h2>
+  <div class="grid">
+    <div class="card kpi gold"><h3>Residual total</h3><div class="v ${totRes<0?'neg':''}">${fCLP(totRes)}</div><div class="s">${con.length} envíos con costo calculado${sinCosto?` · ${sinCosto} aún sin costo (faltan Bs)`:''}</div></div>
+    <div class="card kpi"><h3>Residual sobre volumen</h3><div class="v ${totRes<0?'neg':''}">${fPct(volCon? totRes/volCon : null)}</div><div class="s">Residual ÷ ${fCLP(volCon)} enviados con costo calculado</div></div>
+    <div class="card kpi"><h3>Promedio por envío</h3><div class="v ${totRes<0?'neg':''}">${fCLP(con.length? totRes/con.length : null)}</div><div class="s">Residual ÷ ${con.length} envíos</div></div>
+    <div class="card kpi"><h3>Envíos con residual negativo</h3><div class="v ${neg.length?'neg':''}">${neg.length}</div><div class="s">${neg.length? `pérdida de ${fCLP(Math.abs(totNeg))} · revisa la tasa usada` : 'Ningún envío con pérdida'}</div></div>
+  </div>
+
+  <div class="sec card"><h3>Envíos con mayor residual · ${fMes(S.mes)}</h3>
+    ${top.length? `<div class="tablewrap" style="border:0"><table><thead><tr><th>Fecha</th><th>Cliente</th><th class="n">CLP</th><th class="n">Residual</th></tr></thead><tbody>${top.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')"><td>${fFecha(e.fecha)}</td><td>${esc(e.clienteNombre)}</td><td class="n">${fCLP(e.clp)}</td><td class="n ${e.residual<0?'neg':''}">${fCLP(e.residual)}<div class="muted small">${fPct(e.clp? e.residual/e.clp : null)}</div></td></tr>`).join('')}</tbody></table></div>` : '<div class="muted small">Sin envíos con costo calculado en este período.</div>'}
+  </div>
+  <p class="muted small">Residual de un envío = CLP que pagó el cliente − costo de los Bs entregados (cada parte con la tasa de costo de su compra). La ganancia total del Dashboard = ganancia por compras de USDT + este residual.</p>`;
+}
+
 function vClientes(){
   const q=S.q.trim().toLowerCase(), lim=+S.config.diasInactivo||30;
   const refCount={}; S.clientes.forEach(c=>{ if(c.referidoPor) refCount[c.referidoPor]=(refCount[c.referidoPor]||0)+1; });
@@ -535,16 +625,16 @@ function vClientes(){
   return `
   <div class="row" style="margin-bottom:10px">
     <input id="q" placeholder="Buscar nombre, RUT, teléfono…" value="${esc(S.q)}" style="max-width:320px" oninput="App.buscar(this.value)">
-    <label class="row small" style="margin:0;color:var(--text)"><input type="checkbox" style="width:auto" ${S.soloInactivos?'checked':''} onchange="App.setInactivos(this.checked)"> Solo inactivos (+${lim} días)</label>
+    <label class="row small chk" style="margin:0"><input type="checkbox" style="width:auto" ${S.soloInactivos?'checked':''} onchange="App.setInactivos(this.checked)"> Solo inactivos (+${lim} días)</label>
     <span class="spacer"></span><span class="muted small">${rows.length} clientes</span>
   </div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Cliente</th><th>Teléfono</th><th class="n">Envíos</th><th class="n">Total CLP</th><th class="n">Residual</th><th>Último envío</th><th>Origen</th><th class="n">Referidos</th></tr></thead>
+    <thead><tr><th>Cliente</th><th>Teléfono</th><th class="n">Envíos</th><th class="n">Total CLP</th><th>Último envío</th><th>Origen</th><th class="n">Referidos</th></tr></thead>
     <tbody>${rows.map(({c,a})=>`<tr class="click" onclick="App.abrirCliente('${esc(c.id)}')">
       <td>${esc(c.nombre)}<div class="muted small">${esc(c.rut||c.id)}</div></td><td>${esc(c.telefono||'')}</td>
-      <td class="n">${a.n}</td><td class="n">${fCLP(a.total)}</td><td class="n">${fCLP(a.residual)}</td>
+      <td class="n">${a.n}</td><td class="n">${fCLP(a.total)}</td>
       <td>${a.ultimo?fFecha(a.ultimo).slice(0,8):'—'} ${a.dias!=null?`<span class="badge ${a.dias>lim?'bad':'ok'}">${a.dias} d</span>`:''}</td>
-      <td class="small">${c.referidoPor? 'Ref: '+esc(nom(c.referidoPor)) : esc(c.origen||'')}</td><td class="n">${refCount[c.id]||0}</td></tr>`).join('') || `<tr><td colspan="8" class="muted">Sin clientes. Se crean automáticamente al registrar un envío.</td></tr>`}</tbody>
+      <td class="small">${c.referidoPor? 'Ref: '+esc(nom(c.referidoPor)) : esc(c.origen||'')}</td><td class="n">${refCount[c.id]||0}</td></tr>`).join('') || `<tr><td colspan="7" class="muted">Sin clientes. Se crean automáticamente al registrar un envío.</td></tr>`}</tbody>
   </table></div>`;
 }
 
@@ -565,6 +655,12 @@ function vAjustes(){
       <tbody id="tramosBody">${(c.tramos||[]).map((t,i)=>filaTramo(t)).join('')}</tbody></table></div>
     <div class="row" style="margin-top:8px"><button class="btn sm" onclick="App.addTramo()">+ Tramo</button><span class="muted small">Deja “Hasta” vacío para “sin límite”.</span></div>
     <div class="row" style="margin-top:14px"><button class="btn pri" onclick="App.guardarAjustes()">Guardar ajustes</button></div>
+  </div>
+
+  <div class="card sec">
+    <h3>Fondo de pantalla</h3>
+    <div class="fondos" role="group" aria-label="Fondo de pantalla">${FONDOS.map(f=>`<button type="button" class="fondo-op" data-fondo="${f.k}" aria-pressed="${(c.fondo||DEFAULT_CONFIG.fondo)===f.k}" onclick="App.setFondo('${f.k}')"><div class="mu" style="background:${f.css}"><i></i><i></i></div><span>${f.n}</span></button>`).join('')}</div>
+    <div class="hint">Se aplica al instante y se guarda solo. En modo oscuro del teléfono se mantiene el fondo oscuro.</div>
   </div>
 
   <div class="card sec">
@@ -861,9 +957,16 @@ function guardarAjustes(){
     hasta: tr.querySelector('.tHasta').value.trim()===''? null : parseNum(tr.querySelector('.tHasta').value),
     trab: parseNum(tr.querySelector('.tTrab').value)||0, mio: parseNum(tr.querySelector('.tMio').value)||0
   })).sort((a,b)=>a.desde-b.desde);
-  const cfg={tasaDia:parseNum(g('cfTasa')), comisionBanco:parseNum(g('cfBanco')), metaUSD:parseInt0(g('cfMeta')), diasInactivo:parseInt0(g('cfDias')), dolarRef:parseInt0(g('cfDolar')), tramos};
+  const cfg={tasaDia:parseNum(g('cfTasa')), comisionBanco:parseNum(g('cfBanco')), metaUSD:parseInt0(g('cfMeta')), diasInactivo:parseInt0(g('cfDias')), dolarRef:parseInt0(g('cfDolar')), tramos,
+    fondo: S.config.fondo||DEFAULT_CONFIG.fondo}; // v6: se conserva el fondo elegido (esta escritura reemplaza el documento)
   for(const k of ['tasaDia','comisionBanco','metaUSD','diasInactivo','dolarRef']) if(!ok(cfg[k])) return toast('Valor inválido: '+k);
   guardar('config','general',cfg,false); toast('Ajustes guardados');
+}
+function setFondo(k){
+  if(!FONDOS.some(f=>f.k===k)) return;
+  S.config.fondo=k; aplicarFondo(k);
+  document.querySelectorAll('.fondo-op').forEach(b=> b.setAttribute('aria-pressed', String(b.dataset.fondo===k)));
+  guardar('config','general',{fondo:k},true); // merge: no toca los demás ajustes
 }
 function addTramo(){ document.getElementById('tramosBody').insertAdjacentHTML('beforeend', filaTramo({desde:'',hasta:'',trab:0,mio:0})); }
 
@@ -902,7 +1005,9 @@ async function importJSON(file){
 function startData(){
   stopData();
   ['clientes','envios','lotes'].forEach(c=> unsubs.push(Store.listen(c, docs=>{ S[c]=docs; render(); })));
-  unsubs.push(Store.listen('config', docs=>{ const g=docs.find(d=>d.id==='general'); S.config={...structuredClone(DEFAULT_CONFIG), ...(g||{})}; delete S.config.id; render(); }));
+  unsubs.push(Store.listen('config', docs=>{ const g=docs.find(d=>d.id==='general'); S.config={...structuredClone(DEFAULT_CONFIG), ...(g||{})}; delete S.config.id;
+    if(g && !g.fondo) S.config.fondo='original'; // v6: quien ya tenía ajustes guardados conserva el fondo de siempre hasta que elija otro
+    aplicarFondo(S.config.fondo); render(); }));
 }
 function stopData(){ unsubs.forEach(u=>{ try{u&&u()}catch(e){} }); unsubs=[]; }
 function mostrar(v){ ['loginView','appView','loadingView'].forEach(x=> document.getElementById(x).classList.toggle('hidden', x!==v)); }
@@ -912,7 +1017,7 @@ document.getElementById('mesSel').addEventListener('change', e=>{ S.mes=e.target
 
 window.App = {
   go, cerrar:cerrarDlg, abrirEnvio, abrirLote, abrirCliente, rutInput, usarBen, calcEnvio, calcLote,
-  usarTasaDia, guardarEnvio, guardarLote, guardarCliente, borrarCliente, borrar, toggleEstado, guardarAjustes, addTramo,
+  usarTasaDia, guardarEnvio, guardarLote, guardarCliente, borrarCliente, borrar, toggleEstado, guardarAjustes, addTramo, setFondo,
   exportJSON, exportCSV, importJSON,
   buscar(v){ S.q=v; S._focusQ=true; render(); }, setEstado(v){ S.estado=v; render(); }, setInactivos(v){ S.soloInactivos=v; render(); },
   async salir(){ await Store.logout(); }
