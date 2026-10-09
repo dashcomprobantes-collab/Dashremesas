@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- DASH Remesas · Envíos sin fronteras · v6 -->
+<!-- DASH Remesas · Envíos sin fronteras · v7 -->
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -71,6 +71,8 @@ main{max-width:1100px;margin:0 auto;padding:16px 16px calc(130px + env(safe-area
 .progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));border-radius:99px}
 .kpi.hero{background:linear-gradient(135deg,#14287a,#1d3fb0);border-color:#14287a;color:#fff}
 .kpi.hero h3,.kpi.hero .s{color:#c9d3f5}.kpi.hero .v{color:var(--gold-2)}
+/* v7: unidad "USDT" del número grande un poco más pequeña */
+.kpi.hero .v .u{font-size:.62em;font-weight:600;letter-spacing:.02em}
 .kpi.hero .tot{margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.22);font-size:14px;color:#fff}.kpi.hero .tot b{color:var(--gold-2)}.kpi.hero .tot b.neg{color:#fca5a5}
 .kpi.gold{border-top:3px solid var(--gold)}
 .stockbar{height:6px;background:var(--chip);border-radius:99px;overflow:hidden;min-width:70px;margin-top:4px}
@@ -396,11 +398,11 @@ function calcular(lotes, envios, cfg){
 
   // por mes
   const meses={};
-  const M=k=> meses[k] || (meses[k]={mes:k,vol:0,n:0,bsEnv:0,residual:0,volCost:0,sinCosto:0,ganUSDT:0,trabUSDT:0,trabCLP:0,compras:0,clpCompras:0,usdtComprados:0,clpUsdtConBs:0,bsNetUsdt:0,comprasBs:0,clpBs:0,bsBs:0,bsNetBs:0,trabBs:0,ahorroBs:0,clientes:new Set(),nuevos:0});
+  const M=k=> meses[k] || (meses[k]={mes:k,vol:0,n:0,bsEnv:0,residual:0,volCost:0,sinCosto:0,ganUSDT:0,mioUSDT:0,trabUSDT:0,trabCLP:0,compras:0,clpCompras:0,usdtComprados:0,clpUsdtConBs:0,bsNetUsdt:0,comprasBs:0,clpBs:0,bsBs:0,bsNetBs:0,trabBs:0,ahorroBs:0,clientes:new Set(),nuevos:0});
   E.forEach(e=>{ const m=M(e.mes); m.vol+=e.clp; m.n++; m.bsEnv+=e.bs; m.clientes.add(e.clienteId); if(e.residual!=null){ m.residual+=e.residual; m.volCost+=e.clp; } else m.sinCosto++; });
   L.forEach(l=>{ const m=M(l.mes); m.trabCLP+=l.costoTrab;
     if(l.esBs){ m.comprasBs++; m.clpBs+=l.clp; m.bsBs+=l.bs; m.bsNetBs+=l.bsNet; m.trabBs+=l.bsTrab; m.ahorroBs+=(l.ahorro||0); return; }
-    m.ganUSDT+=l.ganUSDT; m.trabUSDT+=l.trab; m.compras++; m.clpCompras+=l.clp; m.usdtComprados+=l.usdt;
+    m.ganUSDT+=l.ganUSDT; m.mioUSDT+=l.mio; m.trabUSDT+=l.trab; m.compras++; m.clpCompras+=l.clp; m.usdtComprados+=l.usdt;
     if(l.tieneBs){ m.clpUsdtConBs+=l.clp; m.bsNetUsdt+=l.bsNet; } });
 
   // por cliente
@@ -420,7 +422,7 @@ function calcular(lotes, envios, cfg){
   return {L,E,meses,cli,tasaActual,ultimoLote,ultimoConBs,ultimoUSDTConBs,stockBs,stockCosto,faltaBs,bsPend,lotesSinBs,usdtPorVender,usdtEnStock};
 }
 function usdRate(mes){ const m=C.meses[mes]; return (m&&m.precioUSDT) || (C.ultimoLote&&C.ultimoLote.precio) || +S.config.dolarRef || 920; }
-const SUMABLES=['vol','n','residual','ganUSDT','trabUSDT','trabCLP','sinCosto','compras','nuevos','clpUsdtConBs','bsNetUsdt','comprasBs','clpBs','bsBs','bsNetBs','trabBs','ahorroBs'];
+const SUMABLES=['vol','n','residual','ganUSDT','mioUSDT','trabUSDT','trabCLP','sinCosto','compras','nuevos','clpUsdtConBs','bsNetUsdt','comprasBs','clpBs','bsBs','bsNetBs','trabBs','ahorroBs'];
 function resumen(mes){
   if(mes){ if(C.meses[mes]) return C.meses[mes]; const z={mes,ganancia:0,margen:null,nClientes:0}; SUMABLES.forEach(k=>z[k]=0); return z; }
   const r={mes:''}; SUMABLES.forEach(k=>r[k]=0);
@@ -487,7 +489,7 @@ function vInicio(){
   return `
   ${alerts.join('')}
   <div class="grid dash ${nCards%2?'impar':''}">
-    <div class="card kpi hero"><h3>Ganancia USDT · ${fMes(S.mes)}</h3><div class="v ${r.ganUSDT<0?'neg':''}">${fCLP(r.ganUSDT)}</div><div class="s">≈ ${fUSD(r.ganUSDT/usd)} · tus USDT de cada compra × precio del USDT</div><div class="tot">Total con residual: <b class="${r.ganancia<0?'neg':''}">${fCLP(r.ganancia)}</b> (${fUSD(ganUSD)}) · residual ${fCLP(r.residual)}</div></div>
+    <div class="card kpi hero"><h3>Ganancia USDT · ${fMes(S.mes)}</h3><div class="v">${nf2.format(r.mioUSDT||0)} <span class="u">USDT</span></div><div class="s">≈ ${fCLP(r.ganUSDT)} CLP</div><div class="tot">Total con residual: <b class="${r.ganancia<0?'neg':''}">${fCLP(r.ganancia)}</b></div></div>
     <div class="card kpi gold"><h3>Stock en Venezuela</h3><div class="v">${fBs(C.stockBs)}</div><div class="s">≈ ${fUSDT(C.usdtEnStock)} · alcanza para ≈ ${fCLP(alcanza)} a la tasa del día${C.usdtPorVender?` · ${fUSDT(C.usdtPorVender)} por vender`:''}</div></div>
     <div class="card kpi"><h3>Meta mensual</h3><div class="v">${Math.round(pctMeta*100)}%</div><div class="progress"><i style="width:${pctMeta*100}%"></i></div><div class="s">${fUSD(ganUSD)} de ${fUSD(meta)}${S.mes?'':' (historial total)'}</div></div>
     <div class="card kpi"><h3>Volumen enviado</h3><div class="v">${fCLP(r.vol)}</div><div class="s">${r.n} envíos · ticket promedio ${fCLP(ticket)}</div></div>
