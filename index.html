@@ -260,6 +260,10 @@ function eliminar(c,id){ Store.del(c,id).catch(e=> toast('Error al eliminar: '+(
    2) CÁLCULOS
    - Tasa de costo de una compra = (Bs recibidos × (1 − comisión bancaria)) ÷ CLP gastados
    - Ganancia por compra = tus USDT × precio del USDT (CLP/USDT)
+   - Compra directa de Bs (tipo "bs"): Bs = CLP × tasa pagada;
+     Bs netos = (Bs − comisión trabajador en Bs) × (1 − comisión bancaria);
+     tasa de costo = Bs netos ÷ CLP. No genera ganancia por USDT: su ganancia
+     aparece en el residual de los envíos que usan esos Bs.
    - Inventario (stock): cada envío consume los Bs de la compra MÁS ANTIGUA que
      todavía tenga saldo; si no alcanza, completa con la siguiente compra.
      Cada parte se costea con la tasa de SU compra.
@@ -270,14 +274,24 @@ function eliminar(c,id){ Store.del(c,id).catch(e=> toast('Error al eliminar: '+(
 function calcular(lotes, envios, cfg){
   const cb=(+cfg.comisionBanco||0)/100;
   const L=lotes.map(l=>{
-    const clp=+l.clp||0, usdt=+l.usdt||0, trab=+l.usdtTrab||0, mio=+l.usdtMio||0;
+    const clp=+l.clp||0, mes=(l.fecha||'').slice(0,7);
+    if(l.tipo==='bs'){
+      // compra directa de bolívares: pagas CLP en Chile y recibes Bs en Venezuela
+      const tasa=+l.tasa||0, bs= ok(+l.bs)&&+l.bs>0 ? +l.bs : clp*tasa, bsTrab=+l.bsTrab||0;
+      const tieneBs= bs>0, bsNet= Math.max(0,bs-bsTrab)*(1-cb);
+      return {...l, tipo:'bs', esBs:true, clp, tasa, usdt:0, trab:0, mio:0, vend:0, precio:0, tieneBs, bs, bsTrab, bsNet,
+        tasaCosto: tieneBs&&clp>0? bsNet/clp : null, tasaUSDT:null,
+        ganUSDT:0, costoTrab: tasa>0? bsTrab/tasa : 0, mes, ahorro:null, refTasa:null,
+        usado:0, restante:0, nEnvios:0};
+    }
+    const usdt=+l.usdt||0, trab=+l.usdtTrab||0, mio=+l.usdtMio||0;
     const vend=usdt-trab-mio, precio= usdt>0? clp/usdt : 0;
     const tieneBs = l.bs!=null && l.bs!=='' && +l.bs>0;
     const bs= tieneBs? +l.bs : 0, bsNet= bs*(1-cb);
-    return {...l, clp, usdt, trab, mio, vend, precio, tieneBs, bs, bsNet,
+    return {...l, tipo:'usdt', esBs:false, clp, usdt, trab, mio, vend, precio, tieneBs, bs, bsTrab:0, bsNet,
       tasaCosto: tieneBs&&clp>0? bsNet/clp : null,
       tasaUSDT: tieneBs&&vend>0? bs/vend : null,
-      ganUSDT: mio*precio, costoTrab: trab*precio, mes:(l.fecha||'').slice(0,7),
+      ganUSDT: mio*precio, costoTrab: trab*precio, mes,
       usado:0, restante:0, nEnvios:0};
   });
   const E=envios.map(e=>{ const clp=+e.clp||0, tasa=+e.tasa||0; const bs= ok(+e.bs)&&+e.bs>0 ? +e.bs : clp*tasa;
@@ -298,20 +312,32 @@ function calcular(lotes, envios, cfg){
     e.cubierto=e.bs-Math.max(0,falta); e.falta= falta>0.005? falta : 0; e.costoParcial=costo;
     if(!e.falta && e.bs>0){ e.costo=costo; e.residual=e.clp-costo; e.tasaCostoAplicada=e.bs/costo; }
   }
+  // compras USDT con Bs: referencia para comparar las compras directas de Bs y para estimar USDT equivalentes
+  const colaUSDT=cola.filter(l=>!l.esBs);
+  const refUSDT=f=> [...colaUSDT].reverse().find(u=>(u.fecha||'')<=(f||'')) || colaUSDT[0] || null;
+  const ultUSDTvend=[...colaUSDT].reverse().find(u=>u.vend>0);
   L.forEach(l=>{ l.estadoStock= !l.tieneBs? 'por vender' : l.restante<=0? 'agotada' : l.usado>0? 'en uso' : 'disponible';
-    l.usdtRestante= l.tieneBs&&l.bsNet>0? l.restante/(l.bsNet/l.vend) : (l.tieneBs?0:l.vend); });
+    if(l.esBs){
+      const r=refUSDT(l.fecha);
+      if(r&&l.tieneBs){ l.refTasa=r.tasaCosto; l.ahorro=l.bsNet/r.tasaCosto-l.clp; }
+      l.usdtRestante= ultUSDTvend? l.restante/(ultUSDTvend.bsNet/ultUSDTvend.vend) : null;
+    } else l.usdtRestante= l.tieneBs? (l.bsNet>0&&l.vend>0? l.restante/(l.bsNet/l.vend) : 0) : l.vend; });
   const stockBs=cola.reduce((s,l)=>s+l.restante,0);
   const stockCosto=cola.reduce((s,l)=>s+(l.restante>0? l.restante/l.tasaCosto : 0),0);
-  const ultimoLote=[...L].sort((a,b)=> porFecha(b,a))[0];
+  const ultimoLote=L.filter(l=>!l.esBs).sort((a,b)=> porFecha(b,a))[0];
   const ultimoConBs=[...cola].reverse()[0];
+  const ultimoUSDTConBs=[...colaUSDT].reverse()[0];
   const tasaActual= stockBs>0? stockBs/stockCosto : (ultimoConBs? ultimoConBs.tasaCosto : null);
   const faltaBs=E.reduce((s,e)=>s+e.falta,0);
 
   // por mes
   const meses={};
-  const M=k=> meses[k] || (meses[k]={mes:k,vol:0,n:0,bsEnv:0,residual:0,volCost:0,sinCosto:0,ganUSDT:0,trabUSDT:0,trabCLP:0,compras:0,clpCompras:0,usdtComprados:0,clientes:new Set(),nuevos:0});
+  const M=k=> meses[k] || (meses[k]={mes:k,vol:0,n:0,bsEnv:0,residual:0,volCost:0,sinCosto:0,ganUSDT:0,trabUSDT:0,trabCLP:0,compras:0,clpCompras:0,usdtComprados:0,clpUsdtConBs:0,bsNetUsdt:0,comprasBs:0,clpBs:0,bsBs:0,bsNetBs:0,trabBs:0,ahorroBs:0,clientes:new Set(),nuevos:0});
   E.forEach(e=>{ const m=M(e.mes); m.vol+=e.clp; m.n++; m.bsEnv+=e.bs; m.clientes.add(e.clienteId); if(e.residual!=null){ m.residual+=e.residual; m.volCost+=e.clp; } else m.sinCosto++; });
-  L.forEach(l=>{ const m=M(l.mes); m.ganUSDT+=l.ganUSDT; m.trabUSDT+=l.trab; m.trabCLP+=l.costoTrab; m.compras++; m.clpCompras+=l.clp; m.usdtComprados+=l.usdt; });
+  L.forEach(l=>{ const m=M(l.mes); m.trabCLP+=l.costoTrab;
+    if(l.esBs){ m.comprasBs++; m.clpBs+=l.clp; m.bsBs+=l.bs; m.bsNetBs+=l.bsNet; m.trabBs+=l.bsTrab; m.ahorroBs+=(l.ahorro||0); return; }
+    m.ganUSDT+=l.ganUSDT; m.trabUSDT+=l.trab; m.compras++; m.clpCompras+=l.clp; m.usdtComprados+=l.usdt;
+    if(l.tieneBs){ m.clpUsdtConBs+=l.clp; m.bsNetUsdt+=l.bsNet; } });
 
   // por cliente
   const cli={};
@@ -324,16 +350,17 @@ function calcular(lotes, envios, cfg){
   Object.values(meses).forEach(m=>{ m.ganancia=m.ganUSDT+m.residual; m.margen= m.vol? m.ganancia/m.vol : null; m.precioUSDT= m.usdtComprados? m.clpCompras/m.usdtComprados : null; m.nClientes=m.clientes.size; });
 
   const bsPend=E.filter(e=>e.estado!=='pagado').reduce((s,e)=>s+e.bs,0);
-  const lotesSinBs=L.filter(l=>!l.tieneBs);
+  const lotesSinBs=L.filter(l=>!l.esBs&&!l.tieneBs);
   const usdtPorVender=lotesSinBs.reduce((s,l)=>s+l.vend,0);
-  const usdtEnStock=L.reduce((s,l)=>s+(l.tieneBs?l.usdtRestante:0),0);
-  return {L,E,meses,cli,tasaActual,ultimoLote,ultimoConBs,stockBs,stockCosto,faltaBs,bsPend,lotesSinBs,usdtPorVender,usdtEnStock};
+  const usdtEnStock=L.reduce((s,l)=>s+(l.tieneBs&&ok(l.usdtRestante)?l.usdtRestante:0),0);
+  return {L,E,meses,cli,tasaActual,ultimoLote,ultimoConBs,ultimoUSDTConBs,stockBs,stockCosto,faltaBs,bsPend,lotesSinBs,usdtPorVender,usdtEnStock};
 }
 function usdRate(mes){ const m=C.meses[mes]; return (m&&m.precioUSDT) || (C.ultimoLote&&C.ultimoLote.precio) || +S.config.dolarRef || 920; }
+const SUMABLES=['vol','n','residual','ganUSDT','trabUSDT','trabCLP','sinCosto','compras','nuevos','clpUsdtConBs','bsNetUsdt','comprasBs','clpBs','bsBs','bsNetBs','trabBs','ahorroBs'];
 function resumen(mes){
-  if(mes) return C.meses[mes] || {mes,vol:0,n:0,residual:0,ganUSDT:0,ganancia:0,margen:null,trabUSDT:0,trabCLP:0,nClientes:0,nuevos:0,sinCosto:0,compras:0};
-  const r={mes:'',vol:0,n:0,residual:0,ganUSDT:0,trabUSDT:0,trabCLP:0,sinCosto:0,compras:0,nuevos:0};
-  Object.values(C.meses).forEach(m=>['vol','n','residual','ganUSDT','trabUSDT','trabCLP','sinCosto','compras','nuevos'].forEach(k=> r[k]+=m[k]));
+  if(mes){ if(C.meses[mes]) return C.meses[mes]; const z={mes,ganancia:0,margen:null,nClientes:0}; SUMABLES.forEach(k=>z[k]=0); return z; }
+  const r={mes:''}; SUMABLES.forEach(k=>r[k]=0);
+  Object.values(C.meses).forEach(m=>SUMABLES.forEach(k=> r[k]+=m[k]));
   r.ganancia=r.ganUSDT+r.residual; r.margen=r.vol? r.ganancia/r.vol : null; r.nClientes=Object.keys(C.cli).length; return r;
 }
 window.__calcular = calcular; // para pruebas
@@ -401,14 +428,16 @@ function vInicio(){
     <div class="card kpi"><h3>Volumen enviado</h3><div class="v">${fCLP(r.vol)}</div><div class="s">${r.n} envíos · ticket promedio ${fCLP(ticket)}</div></div>
     <div class="card kpi"><h3>Margen real</h3><div class="v">${fPct(r.margen)}</div><div class="s">Ganancia ÷ volumen enviado</div></div>
     <div class="card kpi"><h3>Clientes</h3><div class="v">${r.nClientes||0}</div><div class="s">activos en el período · ${r.nuevos||0} nuevos · ${inact} inactivos (+${S.config.diasInactivo} días)</div></div>
-    <div class="card kpi"><h3>Comisión trabajador</h3><div class="v">${fUSDT(r.trabUSDT)}</div><div class="s">≈ ${fCLP(r.trabCLP)} · ${r.compras} compras</div></div>
-    <div class="card kpi"><h3>Pendientes por pagar</h3><div class="v">${fBs(C.bsPend)}</div><div class="s">${C.E.filter(e=>e.estado!=='pagado').length} envíos sin marcar como pagados</div></div>
+    <div class="card kpi"><h3>Comisión trabajador</h3><div class="v">${fUSDT(r.trabUSDT)}</div><div class="s">${r.trabBs?`+ ${fBs(r.trabBs)} en compras de Bs · `:''}≈ ${fCLP(r.trabCLP)} en total · ${r.compras} compras USDT${r.comprasBs?` · ${r.comprasBs} de Bs`:''}</div></div>
+    <div class="card kpi"><h3>Compras directas de Bs</h3><div class="v">${fBs(r.bsNetBs)}</div><div class="s">${r.comprasBs? `netos · ${r.comprasBs} compras · pagaste ${fCLP(r.clpBs)} · ${fPct(r.bsNetBs/(r.bsNetBs+r.bsNetUsdt))} de los Bs del período` : 'Sin compras de Bs en el período'}</div></div>
+    <div class="card kpi"><h3>Tasa de costo: compra de Bs</h3><div class="v">${fT(r.clpBs? r.bsNetBs/r.clpBs : null)}</div><div class="s">Bs netos por CLP · vía USDT: <b>${fT(r.clpUsdtConBs? r.bsNetUsdt/r.clpUsdtConBs : null)}</b>${r.comprasBs&&r.ahorroBs?` · ${r.ahorroBs>=0?'ahorro':'sobrecosto'} vs USDT ${fCLP(Math.abs(r.ahorroBs))}`:''}</div></div>
+    ${C.E.some(e=>e.estado!=='pagado')? `<div class="card kpi"><h3>Pendientes por pagar</h3><div class="v">${fBs(C.bsPend)}</div><div class="s">${C.E.filter(e=>e.estado!=='pagado').length} envíos sin marcar como pagados</div></div>` : ''}
     <div class="card kpi"><h3>Tasa de costo del stock</h3><div class="v">${fT(ta)}</div><div class="s">Bs por CLP · última compra ${fT(C.ultimoConBs&&C.ultimoConBs.tasaCosto)}</div></div>
   </div>
 
   <div class="sec card">
     <h3>Stock por compra (se usa primero la más antigua)</h3>
-    ${activos.length? `<div class="tablewrap" style="border:0"><table><thead><tr><th>Compra</th><th class="n">Tasa costo</th><th class="n">Bs netos</th><th class="n">Quedan</th><th>Uso</th></tr></thead><tbody>${activos.map(l=>`<tr class="click" onclick="App.abrirLote('${l.id}')"><td>${fFecha(l.fecha)}</td><td class="n">${fT(l.tasaCosto)}</td><td class="n">${fBs(l.bsNet)}</td><td class="n"><b>${fBs(l.restante)}</b><div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div></td><td><div class="stockbar"><i style="width:${Math.round(l.usado/l.bsNet*100)}%"></i></div><span class="muted small">${Math.round(l.usado/l.bsNet*100)}% usado</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="muted small">${C.faltaBs>0?'Sin stock: los envíos registrados ya consumieron todo.':'Sin stock. Registra una compra con los Bs recibidos.'}</div>`}
+    ${activos.length? `<div class="tablewrap" style="border:0"><table><thead><tr><th>Compra</th><th class="n">Tasa costo</th><th class="n">Bs netos</th><th class="n">Quedan</th><th>Uso</th></tr></thead><tbody>${activos.map(l=>`<tr class="click" onclick="App.abrirLote('${l.id}')"><td>${fFecha(l.fecha)} ${tipoBadge(l)}</td><td class="n">${fT(l.tasaCosto)}</td><td class="n">${fBs(l.bsNet)}</td><td class="n"><b>${fBs(l.restante)}</b>${ok(l.usdtRestante)?`<div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div>`:''}</td><td><div class="stockbar"><i style="width:${Math.round(l.usado/l.bsNet*100)}%"></i></div><span class="muted small">${Math.round(l.usado/l.bsNet*100)}% usado</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="muted small">${C.faltaBs>0?'Sin stock: los envíos registrados ya consumieron todo.':'Sin stock. Registra una compra con los Bs recibidos.'}</div>`}
   </div>
 
   <div class="sec card">
@@ -427,6 +456,8 @@ function vInicio(){
   </div>`;
 }
 
+function tipoBadge(l){ return l.esBs? '<span class="badge gold">Bs</span>' : '<span class="badge brand">USDT</span>'; }
+function hayPendientes(){ return C.E.some(e=>e.estado!=='pagado'); }
 function filtrarEnvios(){
   const q=S.q.trim().toLowerCase();
   return C.E.filter(e=> (!S.mes||e.mes===S.mes) && (S.estado==='todos'||(S.estado==='pendiente'? e.estado!=='pagado' : e.estado==='pagado')) &&
@@ -434,50 +465,62 @@ function filtrarEnvios(){
     .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
 }
 function vEnvios(){
+  const hp=hayPendientes(); if(!hp) S.estado='todos';
   const es=filtrarEnvios(); const t=es.reduce((a,e)=>({clp:a.clp+e.clp,bs:a.bs+e.bs,res:a.res+(e.residual||0)}),{clp:0,bs:0,res:0});
   return `
   <div class="row" style="margin-bottom:10px">
     <input id="q" placeholder="Buscar cliente, RUT, beneficiario…" value="${esc(S.q)}" style="max-width:320px" oninput="App.buscar(this.value)">
-    <select style="width:auto" onchange="App.setEstado(this.value)">
+    ${hp?`<select style="width:auto" onchange="App.setEstado(this.value)">
       <option value="todos" ${S.estado==='todos'?'selected':''}>Todos</option>
       <option value="pendiente" ${S.estado==='pendiente'?'selected':''}>Pendientes</option>
       <option value="pagado" ${S.estado==='pagado'?'selected':''}>Pagados</option>
-    </select>
+    </select>`:''}
     <span class="spacer"></span><span class="muted small">${es.length} envíos · ${fMes(S.mes)}</span>
   </div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Fecha</th><th>Cliente</th><th>Beneficiario</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th class="n">Residual</th><th>Estado</th></tr></thead>
+    <thead><tr><th>Fecha</th><th>Cliente</th><th>Beneficiario</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th class="n">Residual</th>${hp?'<th>Estado</th>':''}</tr></thead>
     <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')">
       <td>${fFecha(e.fecha)}</td><td>${esc(e.clienteNombre)}<div class="muted small">${esc(e.clienteRut)}</div></td>
       <td>${esc(e.beneficiario&&e.beneficiario.nombre)}<div class="muted small">${esc(e.beneficiario&&e.beneficiario.banco)}</div></td>
       <td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td><td class="n">${fBs(e.bs)}</td>
       <td class="n ${e.residual<0?'neg':''}">${e.falta? `<span class="badge bad">faltan ${fBs(e.falta)}</span>` : e.residual==null?'<span class="muted">—</span>' : fCLP(e.residual)}${e.partes.length>1?`<div class="muted small">${e.partes.length} compras</div>`:''}</td>
-      <td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td></tr>`).join('') || `<tr><td colspan="8" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
-    ${es.length?`<tfoot><tr><td colspan="3">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td><td class="n">${fCLP(t.res)}</td><td></td></tr></tfoot>`:''}
+      ${hp?`<td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td>`:''}</tr>`).join('') || `<tr><td colspan="${hp?8:7}" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
+    ${es.length?`<tfoot><tr><td colspan="3">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td><td class="n">${fCLP(t.res)}</td>${hp?'<td></td>':''}</tr></tfoot>`:''}
   </table></div>
-  <p class="muted small">“Faltan Bs”: el stock no alcanzó para ese envío; su residual aparece al registrar la compra que lo cubre. “2 compras”: el envío usó Bs de dos compras, cada parte con su tasa. Toca el estado para marcar pagado/pendiente.</p>`;
+  <p class="muted small">“Faltan Bs”: el stock no alcanzó para ese envío; su residual aparece al registrar la compra que lo cubre. “2 compras”: el envío usó Bs de dos compras, cada parte con su tasa.${hp?' Toca el estado para marcar pagado/pendiente.':''}</p>`;
 }
 
 function vCompras(){
   const ls=C.L.filter(l=>!S.mes||l.mes===S.mes).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
-  const t=ls.reduce((a,l)=>({clp:a.clp+l.clp,usdt:a.usdt+l.usdt,trab:a.trab+l.trab,mio:a.mio+l.mio,bs:a.bs+l.bs,bsNet:a.bsNet+l.bsNet,gan:a.gan+l.ganUSDT}),{clp:0,usdt:0,trab:0,mio:0,bs:0,bsNet:0,gan:0});
+  const us=ls.filter(l=>!l.esBs), bz=ls.filter(l=>l.esBs);
+  const sum=(arr,k)=>arr.reduce((s,l)=>s+(l[k]||0),0);
+  const usBs=us.filter(l=>l.tieneBs);
+  const tUS={n:us.length, clp:sum(us,'clp'), usdt:sum(us,'usdt'), trab:sum(us,'trab'), mio:sum(us,'mio'), bs:sum(us,'bs'), bsNet:sum(us,'bsNet'), gan:sum(us,'ganUSDT'), clpConBs:sum(usBs,'clp')};
+  const tBZ={n:bz.length, clp:sum(bz,'clp'), bs:sum(bz,'bs'), bsNet:sum(bz,'bsNet'), trab:sum(bz,'bsTrab'), ahorro:sum(bz,'ahorro')};
+  const conBs=ls.filter(l=>l.tieneBs), bsNetTot=sum(conBs,'bsNet'), clpConBsTot=sum(conBs,'clp');
+  const badge=l=>({ 'por vender':'warn', 'agotada':'', 'en uso':'gold', 'disponible':'ok' }[l.estadoStock]);
   return `
+  <div class="grid" style="margin-bottom:12px">
+    <div class="card kpi"><h3>Vía USDT (Binance)</h3><div class="v">${fBs(tUS.bsNet)}</div><div class="s">netos · ${tUS.n} compras · ${fCLP(tUS.clp)} · tasa costo ${fT(tUS.clpConBs? tUS.bsNet/tUS.clpConBs : null)}</div></div>
+    <div class="card kpi gold"><h3>Compra directa de Bs</h3><div class="v">${fBs(tBZ.bsNet)}</div><div class="s">netos · ${tBZ.n} compras · ${fCLP(tBZ.clp)} · tasa costo ${fT(tBZ.clp? tBZ.bsNet/tBZ.clp : null)}</div></div>
+    <div class="card kpi"><h3>Bs comprados directo</h3><div class="v">${fPct(bsNetTot? tBZ.bsNet/bsNetTot : null)}</div><div class="s">del total de Bs netos del período${tBZ.n&&tBZ.ahorro?` · ${tBZ.ahorro>=0?'ahorro':'sobrecosto'} vs USDT ${fCLP(Math.abs(tBZ.ahorro))}`:''}</div></div>
+  </div>
   <div class="row" style="margin-bottom:10px"><span class="muted small">${ls.length} compras · ${fMes(S.mes)}</span></div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Fecha</th><th>Stock</th><th class="n">Quedan</th><th class="n">Bs netos</th><th class="n">Tasa costo</th><th class="n">CLP</th><th class="n">USDT</th><th class="n">Precio</th><th class="n">Trab.</th><th class="n">Tuyos</th><th class="n">Bs recibidos</th><th class="n">Ganancia USDT</th></tr></thead>
+    <thead><tr><th>Fecha</th><th>Stock</th><th class="n">Quedan</th><th class="n">Bs netos</th><th class="n">Tasa costo</th><th class="n">CLP</th><th class="n">USDT</th><th class="n">Precio / tasa</th><th class="n">Trab.</th><th class="n">Tuyos</th><th class="n">Bs recibidos</th><th class="n">Ganancia USDT</th></tr></thead>
     <tbody>${ls.map(l=>{ const pct=l.tieneBs&&l.bsNet? Math.round(l.usado/l.bsNet*100):0;
-      const badge={ 'por vender':'warn', 'agotada':'', 'en uso':'gold', 'disponible':'ok' }[l.estadoStock];
       return `<tr class="click" onclick="App.abrirLote('${l.id}')">
-      <td>${fFecha(l.fecha)}</td>
-      <td><span class="badge ${badge}">${l.estadoStock}</span>${l.tieneBs?`<div class="stockbar"><i style="width:${pct}%"></i></div>`:''}</td>
-      <td class="n">${l.tieneBs?`<b>${fBs(l.restante)}</b><div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div>`:`${fUSDT(l.vend)}<div class="muted small">por vender</div>`}</td>
+      <td>${fFecha(l.fecha)} ${tipoBadge(l)}${l.esBs&&l.destinatario&&l.destinatario.nombre?`<div class="muted small">a ${esc(l.destinatario.nombre)}</div>`:''}</td>
+      <td><span class="badge ${badge(l)}">${l.estadoStock}</span>${l.tieneBs?`<div class="stockbar"><i style="width:${pct}%"></i></div>`:''}</td>
+      <td class="n">${l.tieneBs?`<b>${fBs(l.restante)}</b>${ok(l.usdtRestante)?`<div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div>`:''}`:`${fUSDT(l.vend)}<div class="muted small">por vender</div>`}</td>
       <td class="n">${l.tieneBs?fBs(l.bsNet):'—'}</td><td class="n">${fT(l.tasaCosto)}</td>
-      <td class="n">${fCLP(l.clp)}</td><td class="n">${nf2.format(l.usdt)}</td><td class="n">${fCLP(l.precio)}</td>
-      <td class="n">${nf2.format(l.trab)}</td><td class="n">${nf2.format(l.mio)}</td>
-      <td class="n">${l.tieneBs?fBs(l.bs):'—'}</td><td class="n">${fCLP(l.ganUSDT)}</td></tr>`; }).join('') || `<tr><td colspan="12" class="muted">No hay compras. Usa “+ Compra”.</td></tr>`}</tbody>
-    ${ls.length?`<tfoot><tr><td>Total</td><td></td><td class="n">${fBs(ls.reduce((s,l)=>s+l.restante,0))}</td><td class="n">${fBs(t.bsNet)}</td><td class="n">${fT(t.clp&&t.bsNet?t.bsNet/t.clp:null)}</td><td class="n">${fCLP(t.clp)}</td><td class="n">${nf2.format(t.usdt)}</td><td class="n">${fCLP(t.usdt?t.clp/t.usdt:null)}</td><td class="n">${nf2.format(t.trab)}</td><td class="n">${nf2.format(t.mio)}</td><td class="n">${fBs(t.bs)}</td><td class="n">${fCLP(t.gan)}</td></tr></tfoot>`:''}
+      <td class="n">${fCLP(l.clp)}</td>
+      ${l.esBs
+        ? `<td class="n muted">—</td><td class="n">${fT(l.tasa)}<div class="muted small">Bs por CLP</div></td><td class="n">${l.bsTrab?fBs(l.bsTrab):'—'}</td><td class="n muted">—</td><td class="n">${fBs(l.bs)}</td><td class="n">${l.ahorro!=null?`<span class="muted small">${l.ahorro>=0?'ahorro':'sobrecosto'}</span> <span class="${l.ahorro<0?'neg':''}">${fCLP(Math.abs(l.ahorro))}</span>`:'—'}</td>`
+        : `<td class="n">${nf2.format(l.usdt)}</td><td class="n">${fCLP(l.precio)}</td><td class="n">${nf2.format(l.trab)}</td><td class="n">${nf2.format(l.mio)}</td><td class="n">${l.tieneBs?fBs(l.bs):'—'}</td><td class="n">${fCLP(l.ganUSDT)}</td>`}</tr>`; }).join('') || `<tr><td colspan="12" class="muted">No hay compras. Usa “+ Compra”.</td></tr>`}</tbody>
+    ${ls.length?`<tfoot><tr><td>Total</td><td></td><td class="n">${fBs(ls.reduce((s,l)=>s+l.restante,0))}</td><td class="n">${fBs(bsNetTot)}</td><td class="n">${fT(clpConBsTot? bsNetTot/clpConBsTot : null)}</td><td class="n">${fCLP(tUS.clp+tBZ.clp)}</td><td class="n">${nf2.format(tUS.usdt)}</td><td class="n">${fCLP(tUS.usdt?tUS.clp/tUS.usdt:null)}</td><td class="n">${nf2.format(tUS.trab)}${tBZ.trab?`<div class="muted small">+ ${fBs(tBZ.trab)}</div>`:''}</td><td class="n">${nf2.format(tUS.mio)}</td><td class="n">${fBs(tUS.bs+tBZ.bs)}</td><td class="n">${fCLP(tUS.gan)}</td></tr></tfoot>`:''}
   </table></div>
-  <p class="muted small">Tasa de costo = (Bs recibidos × (1 − ${S.config.comisionBanco}%)) ÷ CLP gastados. Incluye el costo de las comisiones. Los envíos consumen primero el stock de la compra más antigua.</p>`;
+  <p class="muted small">Tasa de costo = Bs netos ÷ CLP gastados. En compras de USDT: Bs netos = Bs recibidos × (1 − ${S.config.comisionBanco}%). En compras directas de Bs: Bs netos = (CLP × tasa − Bs del trabajador) × (1 − ${S.config.comisionBanco}%). Los envíos consumen primero el stock de la compra más antigua, sin importar el tipo. “Ahorro vs USDT” = lo que te habría costado conseguir esos mismos Bs con tu última compra de USDT, menos lo que pagaste. Es informativo: esa diferencia ya está dentro del residual de los envíos, no se suma otra vez a la ganancia.</p>`;
 }
 
 function vClientes(){
@@ -574,7 +617,7 @@ function abrirEnvio(id){
     <div class="calc" id="envCalc"></div>
     <div class="f2">
       <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(e?e.fecha:ahoraLocal())}" onchange="App.calcEnvio()"></div>
-      <div><label>Estado</label><select name="estado"><option value="pendiente" ${(!e||e.estado!=='pagado')?'selected':''}>Pendiente</option><option value="pagado" ${e&&e.estado==='pagado'?'selected':''}>Pagado</option></select></div>
+      ${e?`<div><label>Estado</label><select name="estado"><option value="pendiente" ${e.estado!=='pagado'?'selected':''}>Pendiente</option><option value="pagado" ${e.estado==='pagado'?'selected':''}>Pagado</option></select></div>`:''}
     </div>
     <details class="mas" id="masDatos" ${e&&(ben.nombre||ben.cedula||ben.cuenta||e.comprobante||e.nota)?'open':''}>
       <summary>Más datos <span class="muted small">(opcional: beneficiario, teléfono, comprobante, nota)</span></summary>
@@ -670,25 +713,45 @@ function guardarEnvio(id){
   guardar('envios', eid, {
     fecha:f.fecha.value, clienteId, clienteRut:cdata.rut, clienteNombre:cdata.nombre,
     clp, tasa, bs:Math.round(clp*tasa*100)/100, beneficiario:ben,
-    comprobante:f.comprobante.value.trim(), estado:f.estado.value, nota:f.nota.value.trim(),
+    comprobante:f.comprobante.value.trim(), estado: f.estado? f.estado.value : 'pagado', nota:f.nota.value.trim(),
     createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()
   }, false);
   cerrarDlg(); toast(id?'Envío actualizado':'Envío registrado');
 }
 
-function abrirLote(id){
+function abrirLote(id, tipoNuevo){
   const l= id? S.lotes.find(x=>x.id===id) : null;
-  abrirDlg(`
-  <div class="dlg-h"><h2>${l?'Editar compra':'Nueva compra de USDT'}</h2><button class="x" onclick="App.cerrar()">×</button></div>
-  <form id="fLote" class="dlg-b" autocomplete="off">
+  const tipo= l? (l.tipo==='bs'?'bs':'usdt') : (tipoNuevo==='bs'?'bs':'usdt');
+  // al cambiar de tipo en una compra nueva se conservan fecha y CLP ya escritos
+  const fa=document.getElementById('fLote'), keep= !l&&fa&&dlg.open? {fecha:fa.fecha.value, clp:fa.clp.value} : null;
+  const vFecha= l? l.fecha : (keep&&keep.fecha) || ahoraLocal(), vClp= l? l.clp : (keep&&keep.clp) || '';
+  const selector= l? '' : `<div class="row" style="margin-top:12px">
+      <button type="button" class="btn ${tipo==='usdt'?'pri':''}" onclick="App.abrirLote(null,'usdt')">USDT (Binance)</button>
+      <button type="button" class="btn ${tipo==='bs'?'gold':''}" onclick="App.abrirLote(null,'bs')">Bolívares</button></div>`;
+  const dest=(l&&l.destinatario)||{};
+  const campos= tipo==='bs' ? `
     <div class="f2">
-      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(l?l.fecha:ahoraLocal())}"></div>
-      <div><label>CLP gastados en Binance</label><input name="clp" inputmode="numeric" required value="${l?l.clp:''}" oninput="App.calcLote()"></div>
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(vFecha)}"></div>
+      <div><label>CLP que pagaste en Chile</label><input name="clp" inputmode="numeric" required value="${esc(vClp)}" oninput="App.calcLote()"></div>
+      <div><label>Tasa que pagaste (Bs por CLP)</label><input name="tasa" inputmode="decimal" required placeholder="Ej: 1.0000" value="${l?l.tasa:''}" oninput="App.calcLote()">
+        <div class="hint">Costo de tu última compra USDT: ${fT(C.ultimoUSDTConBs&&C.ultimoUSDTConBs.tasaCosto)}</div></div>
+      <div><label>Comisión del trabajador (Bs)</label><input name="bsTrab" inputmode="decimal" placeholder="0" value="${l&&l.bsTrab?l.bsTrab:''}" oninput="App.calcLote()"></div>
+      <div><label>A quién le transferiste (nombre)</label><input name="dNombre" required value="${esc(dest.nombre||'')}"></div>
+      <div><label>RUT de esa persona (opcional)</label><input name="dRut" value="${esc(dest.rut||'')}" oninput="App.calcLote()"><div class="hint" id="dRutHint"></div></div>
+    </div>` : `
+    <div class="f2">
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(vFecha)}"></div>
+      <div><label>CLP gastados en Binance</label><input name="clp" inputmode="numeric" required value="${esc(vClp)}" oninput="App.calcLote()"></div>
       <div><label>USDT comprados</label><input name="usdt" inputmode="decimal" required value="${l?l.usdt:''}" oninput="App.calcLote(true)"><div class="hint" id="tramoHint"></div></div>
       <div><label>Bs recibidos al vender (puede quedar vacío)</label><input name="bs" inputmode="decimal" value="${l&&l.bs!=null?l.bs:''}" oninput="App.calcLote()"><div class="hint" id="bsHint"></div></div>
       <div><label>USDT para el trabajador</label><input name="trab" inputmode="decimal" value="${l?l.usdtTrab:''}" oninput="App.calcLote()"></div>
       <div><label>USDT para ti</label><input name="mio" inputmode="decimal" value="${l?l.usdtMio:''}" oninput="App.calcLote()"></div>
-    </div>
+    </div>`;
+  abrirDlg(`
+  <div class="dlg-h"><h2>${l?(tipo==='bs'?'Editar compra de Bs':'Editar compra de USDT'):'Nueva compra'}</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <form id="fLote" class="dlg-b" autocomplete="off" data-tipo="${tipo}">
+    ${selector}
+    ${campos}
     <label>Nota</label><input name="nota" value="${esc(l?l.nota||'':'')}">
     <div class="calc" id="loteCalc"></div>
   </form>
@@ -697,10 +760,25 @@ function abrirLote(id){
 }
 function calcLote(autoTramo){
   const f=document.getElementById('fLote'); if(!f) return;
+  const cb=(+S.config.comisionBanco||0)/100;
+  if(f.dataset.tipo==='bs'){
+    const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value), bsTrab=parseNum(f.bsTrab.value)||0;
+    const bs= clp>0&&tasa>0? clp*tasa : NaN, bsNet= bs>0? Math.max(0,bs-bsTrab)*(1-cb) : NaN, tc= bsNet>0&&clp>0? bsNet/clp : null;
+    const ref=C.ultimoUSDTConBs, ahorro= tc&&ref? bsNet/ref.tasaCosto-clp : null;
+    const r=f.dRut.value.trim(); document.getElementById('dRutHint').textContent= r&&!rutValido(r)? 'RUT no válido (ok si es otro documento)' : '';
+    document.getElementById('loteCalc').innerHTML=`
+      <span>Bs recibidos en Venezuela</span><b>${fBs(bs)}</b>
+      <span>− Comisión trabajador</span><b>${fBs(bsTrab)}</b>
+      <span>Bs netos (−${S.config.comisionBanco}% banco)</span><b>${fBs(bsNet)}</b>
+      <span>Tasa de costo (Bs por CLP)</span><b>${fT(tc)}</b>
+      <span>Costo trabajador</span><b>${tasa>0?fCLP(bsTrab/tasa):'—'}</b>
+      <span>Vs. última compra USDT (${fT(ref&&ref.tasaCosto)})</span><b class="${ahorro<0?'neg':'pos'}">${ok(ahorro)?(ahorro>=0?'ahorras ':'pagas de más ')+fCLP(Math.abs(ahorro)):'—'}</b>`;
+    return;
+  }
   const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
   if(autoTramo && usdt>0){ const t=tramoPara(usdt); f.trab.value=t.trab; f.mio.value=t.mio; document.getElementById('tramoHint').textContent=`Tramo aplicado: ${t.trab} + ${t.mio} USDT`; }
   const trab=parseNum(f.trab.value)||0, mio=parseNum(f.mio.value)||0;
-  const vend=usdt-trab-mio, precio=usdt>0?clp/usdt:null, cb=(+S.config.comisionBanco||0)/100, bsNet= bs>0? bs*(1-cb):null;
+  const vend=usdt-trab-mio, precio=usdt>0?clp/usdt:null, bsNet= bs>0? bs*(1-cb):null;
   document.getElementById('bsHint').textContent= bs>0? '= '+fBs(bs) : '';
   document.getElementById('loteCalc').innerHTML=`
     <span>Precio USDT</span><b>${fCLP(precio)}</b>
@@ -713,11 +791,21 @@ function calcLote(autoTramo){
 }
 function guardarLote(id){
   const f=document.getElementById('fLote'); if(!f.reportValidity()) return;
-  const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
-  if(!(clp>0)) return toast('CLP inválido'); if(!(usdt>0)) return toast('USDT inválido');
   const prev= id? S.lotes.find(x=>x.id===id) : null;
-  guardar('lotes', id||uid(), {fecha:f.fecha.value, clp, usdt, usdtTrab:parseNum(f.trab.value)||0, usdtMio:parseNum(f.mio.value)||0,
-    bs: bs>0? bs : null, nota:f.nota.value.trim(), createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()}, false);
+  const base={fecha:f.fecha.value, nota:f.nota.value.trim(), createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()};
+  if(f.dataset.tipo==='bs'){
+    const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value), bsTrab=parseNum(f.bsTrab.value)||0;
+    if(!(clp>0)) return toast('CLP inválido'); if(!(tasa>0)) return toast('Tasa inválida');
+    const bs=Math.round(clp*tasa*100)/100;
+    if(bsTrab<0||bsTrab>=bs) return toast('Comisión del trabajador inválida');
+    guardar('lotes', id||uid(), {...base, tipo:'bs', clp, tasa, bs, bsTrab, usdt:0, usdtTrab:0, usdtMio:0,
+      destinatario:{nombre:f.dNombre.value.trim(), rut:f.dRut.value.trim()? normRut(f.dRut.value) : ''}}, false);
+  } else {
+    const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
+    if(!(clp>0)) return toast('CLP inválido'); if(!(usdt>0)) return toast('USDT inválido');
+    guardar('lotes', id||uid(), {...base, tipo:'usdt', clp, usdt, usdtTrab:parseNum(f.trab.value)||0, usdtMio:parseNum(f.mio.value)||0,
+      bs: bs>0? bs : null}, false);
+  }
   cerrarDlg(); toast(id?'Compra actualizada':'Compra registrada');
 }
 
@@ -782,8 +870,8 @@ function exportCSV(tipo){
   let rows;
   if(tipo==='envios') rows=[['Fecha','Cliente','RUT','CLP','Tasa','Bs','Costo CLP','Residual CLP','Beneficiario','Cédula','Banco','Cuenta','Estado','Comprobante','Nota'],
     ...C.E.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>[e.fecha,e.clienteNombre,e.clienteRut,e.clp,String(e.tasa).replace('.',','),dec(e.bs),dec(e.costo),dec(e.residual),e.beneficiario&&e.beneficiario.nombre,e.beneficiario&&e.beneficiario.cedula,e.beneficiario&&e.beneficiario.banco,e.beneficiario&&e.beneficiario.cuenta,e.estado,e.comprobante,e.nota])];
-  else if(tipo==='lotes') rows=[['Fecha','CLP','USDT','Precio USDT','USDT trabajador','USDT tuyos','USDT vendidos','Bs recibidos','Bs netos','Tasa costo','Ganancia USDT CLP','Nota'],
-    ...C.L.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(l=>[l.fecha,l.clp,dec(l.usdt),dec(l.precio),dec(l.trab),dec(l.mio),dec(l.vend),l.tieneBs?dec(l.bs):'',l.tieneBs?dec(l.bsNet):'',l.tasaCosto?String(l.tasaCosto.toFixed(6)).replace('.',','):'',dec(l.ganUSDT),l.nota])];
+  else if(tipo==='lotes') rows=[['Fecha','Tipo','CLP','USDT','Precio USDT','USDT trabajador','USDT tuyos','USDT vendidos','Tasa pagada (Bs/CLP)','Bs trabajador','Bs recibidos','Bs netos','Tasa costo','Ganancia USDT CLP','Ahorro vs USDT CLP','Transferido a','RUT transferido','Nota'],
+    ...C.L.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(l=>[l.fecha,l.esBs?'Bs':'USDT',l.clp,l.esBs?'':dec(l.usdt),l.esBs?'':dec(l.precio),l.esBs?'':dec(l.trab),l.esBs?'':dec(l.mio),l.esBs?'':dec(l.vend),l.esBs?String(l.tasa).replace('.',','):'',l.esBs?dec(l.bsTrab):'',l.tieneBs?dec(l.bs):'',l.tieneBs?dec(l.bsNet):'',l.tasaCosto?String(l.tasaCosto.toFixed(6)).replace('.',','):'',l.esBs?'':dec(l.ganUSDT),l.esBs?dec(l.ahorro):'',l.destinatario&&l.destinatario.nombre,l.destinatario&&l.destinatario.rut,l.nota])];
   else rows=[['RUT','Nombre','Teléfono','Origen','Referido por','Envíos','Total CLP','Residual CLP','Último envío','Días sin enviar'],
     ...S.clientes.map(c=>{ const a=C.cli[c.id]||{}; return [c.rut||c.id,c.nombre,c.telefono,c.origen,(S.clientes.find(x=>x.id===c.referidoPor)||{}).nombre||'',a.n||0,a.total||0,dec(a.residual||0),a.ultimo||'',a.dias??'']; })];
   descargar(`remesas-${tipo}-${new Date().toISOString().slice(0,10)}.csv`, csv(rows), 'text/csv;charset=utf-8');
