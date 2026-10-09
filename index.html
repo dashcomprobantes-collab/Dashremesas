@@ -48,6 +48,12 @@ main{max-width:1100px;margin:0 auto;padding:16px 16px 120px}
 .stockbar{height:6px;background:var(--chip);border-radius:99px;overflow:hidden;min-width:70px;margin-top:4px}
 .stockbar>i{display:block;height:100%;background:var(--brand)}
 .badge.gold{background:var(--gold-soft);color:var(--gold-text)}
+details.mas{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:0 12px}
+details.mas>summary{cursor:pointer;padding:11px 0;font-weight:600;color:var(--brand);list-style:none}
+details.mas>summary::-webkit-details-marker{display:none}
+details.mas>summary::before{content:"▸ ";color:var(--gold)}
+details.mas[open]>summary::before{content:"▾ "}
+details.mas[open]{padding-bottom:12px}
 .partes{font-size:13px;margin-top:6px;grid-column:1/-1}
 .partes div{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-top:1px dashed var(--line)}
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
@@ -143,12 +149,12 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
    Si ambos están vacíos, la app funciona en "modo local".
    ============================================================ */
 const FIREBASE_CONFIG_INLINE = {
-  apiKey: "AIzaSyDJFejubqn118UtUZRR6aW3uESsl3HIUm4",
-  authDomain: "dash-remesas.firebaseapp.com",
-  projectId: "dash-remesas",
-  storageBucket: "dash-remesas.firebasestorage.app",
-  messagingSenderId: "546494270588",
-  appId: "1:546494270588:web:e2cad2f11e0297c435cdf9"
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
 };
 const FB_VERSION = "12.18.0";
 /* ============================================================ */
@@ -551,10 +557,11 @@ function abrirEnvio(id){
   <div class="dlg-h"><h2>${e?'Editar envío':'Nuevo envío'}</h2><button class="x" onclick="App.cerrar()">×</button></div>
   <form id="fEnv" class="dlg-b" autocomplete="off" data-id="${e?e.id:''}">
     <div class="f2">
-      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(e?e.fecha:ahoraLocal())}" onchange="App.calcEnvio()"></div>
-      <div><label>RUT / documento del cliente</label><input name="rut" list="dlClientes" required value="${esc(e?e.clienteRut:'')}" oninput="App.rutInput(this.value)"><div class="hint" id="rutHint"></div></div>
+      <div><label>RUT del cliente</label><input name="rut" list="dlClientes" required value="${esc(e?e.clienteRut:'')}" oninput="App.rutInput(this.value)"><div class="hint" id="rutHint"></div></div>
       <div><label>Nombre del cliente</label><input name="nombre" required value="${esc(e?e.clienteNombre:'')}"></div>
-      <div><label>Teléfono (WhatsApp)</label><input name="telefono" inputmode="tel" value=""></div>
+      <div><label>Monto que envía (CLP)</label><input name="clp" inputmode="numeric" required value="${e?e.clp:''}" oninput="App.calcEnvio()"></div>
+      <div><label>Tasa para este cliente (Bs por CLP)</label><input name="tasa" inputmode="decimal" required placeholder="Ej: 0.9500" value="${e?fT(e.tasa):''}" oninput="App.calcEnvio()">
+        <div class="hint">Tasa del día: <a href="#" onclick="App.usarTasaDia();return false">${fT(S.config.tasaDia)} (usar)</a> · costo del stock: ${fT(C.tasaActual)}</div></div>
     </div>
     <div id="origenBox">
       <label>¿Cómo llegó? (solo clientes nuevos)</label>
@@ -564,24 +571,25 @@ function abrirEnvio(id){
         <optgroup label="Otro canal"><option value="o:Redes sociales">Redes sociales</option><option value="o:WhatsApp / chatbot">WhatsApp / chatbot</option><option value="o:Agente">Agente</option><option value="o:Otro">Otro</option></optgroup>
       </select>
     </div>
-    <div class="f2">
-      <div><label>Monto que envía (CLP)</label><input name="clp" inputmode="numeric" required value="${e?e.clp:''}" oninput="App.calcEnvio()"></div>
-      <div><label>Tasa para este cliente (Bs por CLP)</label><input name="tasa" inputmode="decimal" required placeholder="Ej: 0.9500" value="${e?fT(e.tasa):''}" oninput="App.calcEnvio()">
-        <div class="hint">Tasa del día: <a href="#" onclick="App.usarTasaDia();return false">${fT(S.config.tasaDia)} (usar)</a> · costo del stock: ${fT(C.tasaActual)}</div></div>
-    </div>
     <div class="calc" id="envCalc"></div>
-    <h3 style="margin:16px 0 0;font-size:14px">Beneficiario en Venezuela</h3>
-    <div id="benSelBox" class="hidden"><label>Beneficiarios guardados</label><select id="benSel" onchange="App.usarBen(this.value)"></select></div>
     <div class="f2">
-      <div><label>Nombre</label><input name="bNombre" value="${esc(ben.nombre||'')}"></div>
-      <div><label>Cédula</label><input name="bCedula" value="${esc(ben.cedula||'')}"></div>
-      <div><label>Banco</label><input name="bBanco" value="${esc(ben.banco||'')}"></div>
-      <div><label>Cuenta / pago móvil</label><input name="bCuenta" value="${esc(ben.cuenta||'')}"></div>
-      <div><label>Teléfono</label><input name="bTel" inputmode="tel" value="${esc(ben.telefono||'')}"></div>
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(e?e.fecha:ahoraLocal())}" onchange="App.calcEnvio()"></div>
       <div><label>Estado</label><select name="estado"><option value="pendiente" ${(!e||e.estado!=='pagado')?'selected':''}>Pendiente</option><option value="pagado" ${e&&e.estado==='pagado'?'selected':''}>Pagado</option></select></div>
     </div>
-    <label>Comprobante (n° de operación o referencia)</label><input name="comprobante" value="${esc(e?e.comprobante||'':'')}">
-    <label>Nota</label><input name="nota" value="${esc(e?e.nota||'':'')}">
+    <details class="mas" id="masDatos" ${e&&(ben.nombre||ben.cedula||ben.cuenta||e.comprobante||e.nota)?'open':''}>
+      <summary>Más datos <span class="muted small">(opcional: beneficiario, teléfono, comprobante, nota)</span></summary>
+      <label>Teléfono del cliente (WhatsApp)</label><input name="telefono" inputmode="tel" value="">
+      <div id="benSelBox" class="hidden"><label>Beneficiarios guardados</label><select id="benSel" onchange="App.usarBen(this.value)"></select></div>
+      <div class="f2">
+        <div><label>Beneficiario: nombre</label><input name="bNombre" value="${esc(ben.nombre||'')}"></div>
+        <div><label>Cédula</label><input name="bCedula" value="${esc(ben.cedula||'')}"></div>
+        <div><label>Banco</label><input name="bBanco" value="${esc(ben.banco||'')}"></div>
+        <div><label>Cuenta / pago móvil</label><input name="bCuenta" value="${esc(ben.cuenta||'')}"></div>
+        <div><label>Teléfono beneficiario</label><input name="bTel" inputmode="tel" value="${esc(ben.telefono||'')}"></div>
+        <div><label>Comprobante (n° de operación)</label><input name="comprobante" value="${esc(e?e.comprobante||'':'')}"></div>
+      </div>
+      <label>Nota</label><input name="nota" value="${esc(e?e.nota||'':'')}">
+    </details>
   </form>
   <div class="dlg-f">${e?`<button class="btn danger" onclick="App.borrar('envios','${e.id}')">Eliminar</button>`:''}<span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cancelar</button><button class="btn pri" onclick="App.guardarEnvio(${e?`'${e.id}'`:'null'})">Guardar</button></div>`);
   if(e) rutInput(e.clienteRut, true);
