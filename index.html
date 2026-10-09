@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- Remesas · Control · v5 -->
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -260,7 +261,8 @@ function eliminar(c,id){ Store.del(c,id).catch(e=> toast('Error al eliminar: '+(
    2) CÁLCULOS
    - Tasa de costo de una compra = (Bs recibidos × (1 − comisión bancaria)) ÷ CLP gastados
    - Ganancia por compra = tus USDT × precio del USDT (CLP/USDT)
-   - Compra directa de Bs (tipo "bs"): Bs = CLP × tasa pagada;
+   - Compra directa de Bs (tipo "bs"): Bs = Bs recibidos (se ingresan desde v5);
+     tasa pagada = Bs ÷ CLP (derivada);
      Bs netos = (Bs − comisión trabajador en Bs) × (1 − comisión bancaria);
      tasa de costo = Bs netos ÷ CLP. No genera ganancia por USDT: su ganancia
      aparece en el residual de los envíos que usan esos Bs.
@@ -520,7 +522,7 @@ function vCompras(){
         : `<td class="n">${nf2.format(l.usdt)}</td><td class="n">${fCLP(l.precio)}</td><td class="n">${nf2.format(l.trab)}</td><td class="n">${nf2.format(l.mio)}</td><td class="n">${l.tieneBs?fBs(l.bs):'—'}</td><td class="n">${fCLP(l.ganUSDT)}</td>`}</tr>`; }).join('') || `<tr><td colspan="12" class="muted">No hay compras. Usa “+ Compra”.</td></tr>`}</tbody>
     ${ls.length?`<tfoot><tr><td>Total</td><td></td><td class="n">${fBs(ls.reduce((s,l)=>s+l.restante,0))}</td><td class="n">${fBs(bsNetTot)}</td><td class="n">${fT(clpConBsTot? bsNetTot/clpConBsTot : null)}</td><td class="n">${fCLP(tUS.clp+tBZ.clp)}</td><td class="n">${nf2.format(tUS.usdt)}</td><td class="n">${fCLP(tUS.usdt?tUS.clp/tUS.usdt:null)}</td><td class="n">${nf2.format(tUS.trab)}${tBZ.trab?`<div class="muted small">+ ${fBs(tBZ.trab)}</div>`:''}</td><td class="n">${nf2.format(tUS.mio)}</td><td class="n">${fBs(tUS.bs+tBZ.bs)}</td><td class="n">${fCLP(tUS.gan)}</td></tr></tfoot>`:''}
   </table></div>
-  <p class="muted small">Tasa de costo = Bs netos ÷ CLP gastados. En compras de USDT: Bs netos = Bs recibidos × (1 − ${S.config.comisionBanco}%). En compras directas de Bs: Bs netos = (CLP × tasa − Bs del trabajador) × (1 − ${S.config.comisionBanco}%). Los envíos consumen primero el stock de la compra más antigua, sin importar el tipo. “Ahorro vs USDT” = lo que te habría costado conseguir esos mismos Bs con tu última compra de USDT, menos lo que pagaste. Es informativo: esa diferencia ya está dentro del residual de los envíos, no se suma otra vez a la ganancia.</p>`;
+  <p class="muted small">Tasa de costo = Bs netos ÷ CLP gastados. En compras de USDT: Bs netos = Bs recibidos × (1 − ${S.config.comisionBanco}%). En compras directas de Bs: Bs netos = (Bs recibidos − Bs del trabajador) × (1 − ${S.config.comisionBanco}%). Los envíos consumen primero el stock de la compra más antigua, sin importar el tipo. “Ahorro vs USDT” = lo que te habría costado conseguir esos mismos Bs con tu última compra de USDT, menos lo que pagaste. Es informativo: esa diferencia ya está dentro del residual de los envíos, no se suma otra vez a la ganancia.</p>`;
 }
 
 function vClientes(){
@@ -733,7 +735,7 @@ function abrirLote(id, tipoNuevo){
     <div class="f2">
       <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(vFecha)}"></div>
       <div><label>CLP que pagaste en Chile</label><input name="clp" inputmode="numeric" required value="${esc(vClp)}" oninput="App.calcLote()"></div>
-      <div><label>Tasa que pagaste (Bs por CLP)</label><input name="tasa" inputmode="decimal" required placeholder="Ej: 1.0000" value="${l?l.tasa:''}" oninput="App.calcLote()">
+      <div><label>Bs recibidos en Venezuela</label><input name="bs" inputmode="decimal" required placeholder="Ej: 100000" value="${l? (+l.bs>0? l.bs : (+l.clp>0&&+l.tasa>0? Math.round(l.clp*l.tasa*100)/100 : '')) : ''}" oninput="App.calcLote()">
         <div class="hint">Costo de tu última compra USDT: ${fT(C.ultimoUSDTConBs&&C.ultimoUSDTConBs.tasaCosto)}</div></div>
       <div><label>Comisión del trabajador (Bs)</label><input name="bsTrab" inputmode="decimal" placeholder="0" value="${l&&l.bsTrab?l.bsTrab:''}" oninput="App.calcLote()"></div>
       <div><label>A quién le transferiste (nombre)</label><input name="dNombre" required value="${esc(dest.nombre||'')}"></div>
@@ -762,17 +764,23 @@ function calcLote(autoTramo){
   const f=document.getElementById('fLote'); if(!f) return;
   const cb=(+S.config.comisionBanco||0)/100;
   if(f.dataset.tipo==='bs'){
-    const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value), bsTrab=parseNum(f.bsTrab.value)||0;
-    const bs= clp>0&&tasa>0? clp*tasa : NaN, bsNet= bs>0? Math.max(0,bs-bsTrab)*(1-cb) : NaN, tc= bsNet>0&&clp>0? bsNet/clp : null;
+    // v5: la tasa ya no se escribe; se calcula con los Bs recibidos y los CLP pagados
+    const clp=parseInt0(f.clp.value), bs=parseNum(f.bs.value), bsTrab=parseNum(f.bsTrab.value)||0;
+    const tasa= clp>0&&bs>0? bs/clp : NaN;
+    const bsNet= bs>0? Math.max(0,bs-bsTrab)*(1-cb) : NaN, tc= bsNet>0&&clp>0? bsNet/clp : null;
     const ref=C.ultimoUSDTConBs, ahorro= tc&&ref? bsNet/ref.tasaCosto-clp : null;
+    const td=+S.config.tasaDia, ganDia= tc&&td>0? bsNet/td-clp : null;
     const r=f.dRut.value.trim(); document.getElementById('dRutHint').textContent= r&&!rutValido(r)? 'RUT no válido (ok si es otro documento)' : '';
     document.getElementById('loteCalc').innerHTML=`
+      <span>Tasa que pagaste (Bs por CLP)</span><b>${fT(tasa)}</b>
       <span>Bs recibidos en Venezuela</span><b>${fBs(bs)}</b>
       <span>− Comisión trabajador</span><b>${fBs(bsTrab)}</b>
       <span>Bs netos (−${S.config.comisionBanco}% banco)</span><b>${fBs(bsNet)}</b>
       <span>Tasa de costo (Bs por CLP)</span><b>${fT(tc)}</b>
       <span>Costo trabajador</span><b>${tasa>0?fCLP(bsTrab/tasa):'—'}</b>
-      <span>Vs. última compra USDT (${fT(ref&&ref.tasaCosto)})</span><b class="${ahorro<0?'neg':'pos'}">${ok(ahorro)?(ahorro>=0?'ahorras ':'pagas de más ')+fCLP(Math.abs(ahorro)):'—'}</b>`;
+      <span>Ahorro vs última compra USDT (${fT(ref&&ref.tasaCosto)})</span><b class="${ahorro<0?'neg':'pos'}">${ok(ahorro)?(ahorro>=0?'ahorras ':'pagas de más ')+fCLP(Math.abs(ahorro)):'—'}</b>
+      ${td>0?`<span>Ganancia estimada si envías estos Bs a la tasa del día (${fT(td)})</span><b class="${ganDia<0?'neg':'pos'}">${ok(ganDia)?fCLP(ganDia)+(clp?' ('+fPct(ganDia/clp)+')':''):'—'}</b>`:''}
+      <div class="partes muted">Estimación informativa: la ganancia real aparece en el residual de los envíos que usen estos Bs (cada uno con su propia tasa). No se suma aparte a la ganancia total.</div>`;
     return;
   }
   const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
@@ -794,9 +802,9 @@ function guardarLote(id){
   const prev= id? S.lotes.find(x=>x.id===id) : null;
   const base={fecha:f.fecha.value, nota:f.nota.value.trim(), createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()};
   if(f.dataset.tipo==='bs'){
-    const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value), bsTrab=parseNum(f.bsTrab.value)||0;
-    if(!(clp>0)) return toast('CLP inválido'); if(!(tasa>0)) return toast('Tasa inválida');
-    const bs=Math.round(clp*tasa*100)/100;
+    const clp=parseInt0(f.clp.value), bsIn=parseNum(f.bs.value), bsTrab=parseNum(f.bsTrab.value)||0;
+    if(!(clp>0)) return toast('CLP inválido'); if(!(bsIn>0)) return toast('Bs recibidos inválidos');
+    const bs=Math.round(bsIn*100)/100, tasa=bs/clp; // v5: la tasa se deriva (Bs ÷ CLP)
     if(bsTrab<0||bsTrab>=bs) return toast('Comisión del trabajador inválida');
     guardar('lotes', id||uid(), {...base, tipo:'bs', clp, tasa, bs, bsTrab, usdt:0, usdtTrab:0, usdtMio:0,
       destinatario:{nombre:f.dNombre.value.trim(), rut:f.dRut.value.trim()? normRut(f.dRut.value) : ''}}, false);
