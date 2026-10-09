@@ -1,0 +1,946 @@
+<!doctype html>
+<!-- Remesas · Control · v5 -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14287a">
+<title>Remesas · Control</title>
+<style>
+:root{--bg:#f3f5fb;--card:#fff;--text:#0f1a3d;--muted:#5a6688;--line:#dfe4f1;--brand:#1d3fb0;--brand-2:#14287a;--brand-soft:#e5ebfc;--on-brand:#fff;--gold:#c9a227;--gold-2:#e2c35a;--gold-soft:#fbf3da;--gold-text:#7d600c;--ok:#15803d;--ok-soft:#dcfce7;--warn:#a35a06;--warn-soft:#fdf0d2;--bad:#b91c1c;--bad-soft:#fee2e2;--chip:#eef1f9;--shadow:0 1px 2px rgba(15,26,61,.05),0 3px 10px rgba(15,26,61,.06)}
+@media (prefers-color-scheme:dark){:root{--bg:#081032;--card:#0f1a47;--text:#eef1fa;--muted:#a4afd3;--line:#22306a;--brand:#7b97ff;--brand-2:#0b1640;--brand-soft:#1a2a6b;--on-brand:#081032;--gold:#e2c35a;--gold-2:#f0d784;--gold-soft:#332b10;--gold-text:#e9cc6c;--ok:#4ade80;--ok-soft:#123222;--warn:#fbbf24;--warn-soft:#3a2d0d;--bad:#f87171;--bad-soft:#3b1515;--chip:#16235a;--shadow:none}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--brand)}
+.hidden{display:none!important}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(120deg,#14287a 0%,#1d3fb0 70%,#2347c4 100%);border-bottom:3px solid var(--gold);padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#fff}
+header h1{font-size:17px;margin:0;flex:1;min-width:120px;display:flex;align-items:center;gap:9px;letter-spacing:.01em}
+header h1 .logo{width:28px;height:28px;flex:none}
+header h1 span.g{color:var(--gold-2)}
+header select{width:auto;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff}
+header select option{color:#0f1a3d}
+.badge{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}.badge.warn{background:var(--warn-soft);color:var(--warn)}.badge.bad{background:var(--bad-soft);color:var(--bad)}.badge.brand{background:var(--brand-soft);color:var(--brand)}
+nav.tabs{display:flex;gap:2px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:56px;z-index:19;overflow-x:auto}
+nav.tabs button{border:0;background:none;padding:12px 12px 10px;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent}
+nav.tabs button.on{color:var(--brand);font-weight:700;border-bottom-color:var(--gold)}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 120px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+@media (max-width:640px){.grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:24px;font-weight:700;letter-spacing:-.01em}
+.kpi .s{font-size:13px;color:var(--muted);margin-top:2px}
+.sec{margin-top:16px}
+.sec>h2{font-size:16px;margin:0 0 10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:9px;cursor:pointer}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:var(--on-brand);font-weight:600}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#14287a;font-weight:600}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.progress{height:10px;background:var(--chip);border-radius:99px;overflow:hidden;margin-top:8px}
+.progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));border-radius:99px}
+.kpi.hero{background:linear-gradient(135deg,#14287a,#1d3fb0);border-color:#14287a;color:#fff}
+.kpi.hero h3,.kpi.hero .s{color:#c9d3f5}.kpi.hero .v{color:var(--gold-2)}
+.kpi.gold{border-top:3px solid var(--gold)}
+.stockbar{height:6px;background:var(--chip);border-radius:99px;overflow:hidden;min-width:70px;margin-top:4px}
+.stockbar>i{display:block;height:100%;background:var(--brand)}
+.badge.gold{background:var(--gold-soft);color:var(--gold-text)}
+details.mas{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:0 12px}
+details.mas>summary{cursor:pointer;padding:11px 0;font-weight:600;color:var(--brand);list-style:none}
+details.mas>summary::-webkit-details-marker{display:none}
+details.mas>summary::before{content:"▸ ";color:var(--gold)}
+details.mas[open]>summary::before{content:"▾ "}
+details.mas[open]{padding-bottom:12px}
+.partes{font-size:13px;margin-top:6px;grid-column:1/-1}
+.partes div{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-top:1px dashed var(--line)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--card);position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--chip)}
+tfoot td{font-weight:700}
+.muted{color:var(--muted)}.small{font-size:13px}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media (max-width:520px){.f2{grid-template-columns:1fr}}
+.hint{font-size:12px;color:var(--muted);margin-top:3px;min-height:16px}
+.calc{background:var(--chip);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:14px;display:grid;grid-template-columns:auto auto;gap:4px 14px}
+.calc b{text-align:right;font-variant-numeric:tabular-nums}
+.alert{padding:10px 12px;border-radius:10px;margin-bottom:8px;font-size:14px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)}.alert.bad{background:var(--bad-soft);color:var(--bad)}.alert.info{background:var(--brand-soft);color:var(--brand)}
+.fab{position:fixed;right:16px;bottom:18px;z-index:30;display:flex;gap:8px}
+.fab .btn{box-shadow:0 4px 14px rgba(0,0,0,.18)}
+dialog{border:0;border-radius:14px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--card);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg-h{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:2}
+.dlg-h h2{margin:0;font-size:17px;flex:1}
+.dlg-b{padding:4px 16px 16px}
+.dlg-f{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--card)}
+.x{border:0;background:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+#toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#14287a;border:1px solid var(--gold);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast.on{opacity:1}
+.login{max-width:380px;margin:12vh auto;padding:0 16px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px}
+.list-plain{margin:0;padding-left:18px}
+.estado{border:0;cursor:pointer}
+@media (max-width:640px){header h1{font-size:16px}.kpi .v{font-size:21px}nav.tabs{top:auto}}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login hidden">
+  <div class="card" style="border-top:4px solid var(--gold)">
+    <h2 style="margin-top:0;display:flex;align-items:center;gap:10px;color:var(--brand)"><svg class="logo" width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#14287a" stroke="#c9a227" stroke-width="2"/><path d="M9 19.5l7-9 7 9" fill="none" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 23h10" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round"/></svg>Remesas · Control</h2>
+    <p class="muted small">Inicia sesión con el usuario que creaste en Firebase.</p>
+    <form id="loginForm">
+      <label>Correo</label><input id="lgEmail" type="email" autocomplete="username" required>
+      <label>Contraseña</label><input id="lgPass" type="password" autocomplete="current-password" required>
+      <div class="hint" id="lgErr" style="color:var(--bad)"></div>
+      <button class="btn pri" style="width:100%;margin-top:8px">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+  <header>
+    <h1><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#0b1a5c" stroke="#c9a227" stroke-width="2"/><path d="M9 19.5l7-9 7 9" fill="none" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 23h10" stroke="#e2c35a" stroke-width="2.6" stroke-linecap="round"/></svg>Remesas <span class="g">· Control</span></h1>
+    <select id="mesSel"></select>
+    <span id="modeBadge" class="badge"></span>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button data-v="inicio">Inicio</button>
+    <button data-v="envios">Envíos</button>
+    <button data-v="compras">Compras y stock</button>
+    <button data-v="clientes">Clientes</button>
+    <button data-v="ajustes">Ajustes</button>
+  </nav>
+  <main id="view"></main>
+  <div class="fab">
+    <button class="btn gold" onclick="App.abrirLote()">+ Compra</button>
+    <button class="btn pri" onclick="App.abrirEnvio()">+ Envío</button>
+  </div>
+</div>
+
+<div id="loadingView" class="login"><div class="card muted">Cargando…</div></div>
+
+<dialog id="dlg"></dialog>
+<div id="toast"></div>
+<datalist id="dlClientes"></datalist>
+
+<!-- Configuración de Firebase en archivo aparte (se sube una sola vez).
+     Si el archivo no existe, la app usa el bloque FIREBASE_CONFIG de abajo. -->
+<script src="firebase-config.js"></script>
+<script type="module">
+/* ============================================================
+   1) CONFIGURACIÓN DE FIREBASE
+   Opción recomendada: pon tus datos en el archivo firebase-config.js
+   (junto a este index.html). Así puedes reemplazar index.html en
+   cada actualización sin volver a pegar la configuración.
+   Opción alternativa: pegarlos aquí abajo (se usan solo si
+   firebase-config.js no existe).
+   Si ambos están vacíos, la app funciona en "modo local".
+   ============================================================ */
+const FIREBASE_CONFIG_INLINE = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+const FB_VERSION = "12.18.0";
+/* ============================================================ */
+
+const FIREBASE_CONFIG = (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) ? window.FIREBASE_CONFIG : FIREBASE_CONFIG_INLINE;
+const MODO_LOCAL = !FIREBASE_CONFIG.apiKey;
+const COLS = ['clientes','envios','lotes','config'];
+
+const DEFAULT_CONFIG = {
+  tasaDia: 0.95,
+  comisionBanco: 0.3,
+  metaUSD: 5000,
+  diasInactivo: 30,
+  dolarRef: 920,
+  tramos: [
+    {desde:0,   hasta:200,  trab:0,  mio:0},
+    {desde:200, hasta:300,  trab:5,  mio:5},
+    {desde:300, hasta:450,  trab:10, mio:10},
+    {desde:450, hasta:null, trab:15, mio:15}
+  ]
+};
+
+const S = {clientes:[], envios:[], lotes:[], config:structuredClone(DEFAULT_CONFIG), view:'inicio', mes:mesActual(), q:'', estado:'todos', soloInactivos:false};
+let C = null;           // resultados de cálculos
+let Store = null;
+let unsubs = [];
+
+/* ---------- utilidades ---------- */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function clean(o){ return JSON.parse(JSON.stringify(o, (k,v)=> (typeof v==='number' && !isFinite(v)) ? null : v)); }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function mesActual(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function ahoraLocal(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16); }
+function parseNum(v){
+  if(v==null) return NaN; v=String(v).trim().replace(/\s/g,'').replace(/[$]/g,''); if(!v) return NaN;
+  const hc=v.includes(','), hd=v.includes('.');
+  if(hc&&hd){ v = v.lastIndexOf(',')>v.lastIndexOf('.') ? v.replace(/\./g,'').replace(',','.') : v.replace(/,/g,''); }
+  else if(hc){ v = (v.match(/,/g).length>1) ? v.replace(/,/g,'') : v.replace(',','.'); }
+  else if(hd){ if(v.match(/\./g).length>1) v=v.replace(/\./g,''); }
+  const n=parseFloat(v.replace(/[^0-9.\-]/g,'')); return isNaN(n)?NaN:n;
+}
+function parseInt0(v){ const d=String(v??'').replace(/[^0-9\-]/g,''); return d?parseInt(d,10):NaN; }
+const nf0=new Intl.NumberFormat('es-CL',{maximumFractionDigits:0});
+const nf2=new Intl.NumberFormat('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ok=n=> n!=null && isFinite(n);
+const fCLP=n=> !ok(n)?'—':(n<0?'-$':'$')+nf0.format(Math.abs(Math.round(n)));
+const fBs=n=> !ok(n)?'—':nf2.format(n)+' Bs';
+const fUSD=n=> !ok(n)?'—':'US$ '+nf0.format(Math.round(n));
+const fUSDT=n=> !ok(n)?'—':nf2.format(n)+' USDT';
+const fT=n=> !ok(n)?'—':Number(n).toFixed(4);
+const fPct=n=> !ok(n)?'—':(n*100).toFixed(2).replace('.',',')+'%';
+const fFecha=f=> f? f.slice(8,10)+'/'+f.slice(5,7)+'/'+f.slice(2,4)+' '+f.slice(11,16) : '—';
+const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const fMes=k=> k? MESES[+k.slice(5,7)-1]+' '+k.slice(0,4) : 'Todos';
+function compact(n){ const a=Math.abs(n); if(a>=1e6) return (n/1e6).toFixed(1).replace('.',',')+'M'; if(a>=1e3) return Math.round(n/1e3)+'k'; return Math.round(n)+''; }
+function diasDesde(f){ return f? Math.floor((Date.now()-new Date(f).getTime())/864e5) : null; }
+function normRut(r){ let s=String(r||'').toUpperCase().replace(/[.\s]/g,'').replace(/\//g,'-'); if(/^\d{7,8}[0-9K]$/.test(s)) s=s.slice(0,-1)+'-'+s.slice(-1); return s; }
+function rutValido(r){ const m=/^(\d{7,8})-([0-9K])$/.exec(normRut(r)); if(!m) return false; let s=0,f=2; for(let i=m[1].length-1;i>=0;i--){ s+= +m[1][i]*f; f=f===7?2:f+1; } const dv=11-(s%11); const d= dv===11?'0': dv===10?'K': String(dv); return d===m[2]; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+function descargar(nombre, contenido, tipo){ const b=new Blob([contenido],{type:tipo}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=nombre; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
+function tramoPara(usdt){ const t=(S.config.tramos||[]).find(t=> usdt>=(+t.desde||0) && (t.hasta==null||t.hasta===''||usdt<+t.hasta)); return t||{trab:0,mio:0}; }
+
+/* ---------- almacenamiento: modo local ---------- */
+const LocalStore = {
+  key:'remesas_local_v1', data:{}, subs:{},
+  async init(){ try{ this.data=JSON.parse(localStorage.getItem(this.key))||{}; }catch(e){ this.data={}; } COLS.forEach(c=> this.data[c]=this.data[c]||{}); },
+  persist(){ try{ localStorage.setItem(this.key, JSON.stringify(this.data)); }catch(e){ toast('No se pudo guardar en el navegador'); } },
+  list(c){ return Object.entries(this.data[c]).map(([id,d])=>({id,...d})); },
+  emit(c){ this.persist(); this.subs[c] && this.subs[c](this.list(c)); },
+  listen(c, cb){ this.subs[c]=cb; cb(this.list(c)); return ()=>{ delete this.subs[c]; }; },
+  set(c,id,d,merge=true){ this.data[c][id] = merge ? {...(this.data[c][id]||{}), ...clean(d)} : clean(d); this.emit(c); return Promise.resolve(); },
+  del(c,id){ delete this.data[c][id]; this.emit(c); return Promise.resolve(); },
+  async batchSet(items){ items.forEach(it=>{ this.data[it.col][it.id]=clean(it.data); }); COLS.forEach(c=>this.emit(c)); },
+  async logout(){}
+};
+
+/* ---------- almacenamiento: Firebase ---------- */
+const FireStore = {
+  m:{}, db:null, auth:null, onAuth:null,
+  async init(){
+    const base=`https://www.gstatic.com/firebasejs/${FB_VERSION}/`;
+    const [a,au,fs] = await Promise.all([import(base+'firebase-app.js'), import(base+'firebase-auth.js'), import(base+'firebase-firestore.js')]);
+    this.m={...a,...au,...fs};
+    const app=a.initializeApp(FIREBASE_CONFIG);
+    this.auth=au.getAuth(app);
+    try{ this.db=fs.initializeFirestore(app,{localCache:fs.persistentLocalCache({tabManager:fs.persistentMultipleTabManager()})}); }
+    catch(e){ this.db=fs.getFirestore(app); }
+    au.onAuthStateChanged(this.auth, u=> this.onAuth && this.onAuth(u));
+  },
+  login(e,p){ return this.m.signInWithEmailAndPassword(this.auth,e,p); },
+  logout(){ return this.m.signOut(this.auth); },
+  listen(c, cb){ return this.m.onSnapshot(this.m.collection(this.db,c), snap=> cb(snap.docs.map(d=>({id:d.id,...d.data()}))), err=> toast('Error leyendo '+c+': '+err.code)); },
+  set(c,id,d,merge=true){ return this.m.setDoc(this.m.doc(this.db,c,id), clean(d), {merge}); },
+  del(c,id){ return this.m.deleteDoc(this.m.doc(this.db,c,id)); },
+  async batchSet(items){
+    for(let i=0;i<items.length;i+=400){ const b=this.m.writeBatch(this.db); items.slice(i,i+400).forEach(it=> b.set(this.m.doc(this.db,it.col,it.id), clean(it.data))); await b.commit(); }
+  }
+};
+function guardar(c,id,d,merge=true){ Store.set(c,id,d,merge).catch(e=> toast('Error al guardar: '+(e.code||e.message))); }
+function eliminar(c,id){ Store.del(c,id).catch(e=> toast('Error al eliminar: '+(e.code||e.message))); }
+
+/* ============================================================
+   2) CÁLCULOS
+   - Tasa de costo de una compra = (Bs recibidos × (1 − comisión bancaria)) ÷ CLP gastados
+   - Ganancia por compra = tus USDT × precio del USDT (CLP/USDT)
+   - Compra directa de Bs (tipo "bs"): Bs = Bs recibidos (se ingresan desde v5);
+     tasa pagada = Bs ÷ CLP (derivada);
+     Bs netos = (Bs − comisión trabajador en Bs) × (1 − comisión bancaria);
+     tasa de costo = Bs netos ÷ CLP. No genera ganancia por USDT: su ganancia
+     aparece en el residual de los envíos que usan esos Bs.
+   - Inventario (stock): cada envío consume los Bs de la compra MÁS ANTIGUA que
+     todavía tenga saldo; si no alcanza, completa con la siguiente compra.
+     Cada parte se costea con la tasa de SU compra.
+   - Residual por envío = CLP que pagó el cliente − costo en CLP de los Bs entregados
+     (si al envío le faltan Bs, el residual se calcula cuando registres la compra que lo cubre)
+   - Ganancia total = ganancia por compras + residual de envíos
+   ============================================================ */
+function calcular(lotes, envios, cfg){
+  const cb=(+cfg.comisionBanco||0)/100;
+  const L=lotes.map(l=>{
+    const clp=+l.clp||0, mes=(l.fecha||'').slice(0,7);
+    if(l.tipo==='bs'){
+      // compra directa de bolívares: pagas CLP en Chile y recibes Bs en Venezuela
+      const tasa=+l.tasa||0, bs= ok(+l.bs)&&+l.bs>0 ? +l.bs : clp*tasa, bsTrab=+l.bsTrab||0;
+      const tieneBs= bs>0, bsNet= Math.max(0,bs-bsTrab)*(1-cb);
+      return {...l, tipo:'bs', esBs:true, clp, tasa, usdt:0, trab:0, mio:0, vend:0, precio:0, tieneBs, bs, bsTrab, bsNet,
+        tasaCosto: tieneBs&&clp>0? bsNet/clp : null, tasaUSDT:null,
+        ganUSDT:0, costoTrab: tasa>0? bsTrab/tasa : 0, mes, ahorro:null, refTasa:null,
+        usado:0, restante:0, nEnvios:0};
+    }
+    const usdt=+l.usdt||0, trab=+l.usdtTrab||0, mio=+l.usdtMio||0;
+    const vend=usdt-trab-mio, precio= usdt>0? clp/usdt : 0;
+    const tieneBs = l.bs!=null && l.bs!=='' && +l.bs>0;
+    const bs= tieneBs? +l.bs : 0, bsNet= bs*(1-cb);
+    return {...l, tipo:'usdt', esBs:false, clp, usdt, trab, mio, vend, precio, tieneBs, bs, bsTrab:0, bsNet,
+      tasaCosto: tieneBs&&clp>0? bsNet/clp : null,
+      tasaUSDT: tieneBs&&vend>0? bs/vend : null,
+      ganUSDT: mio*precio, costoTrab: trab*precio, mes,
+      usado:0, restante:0, nEnvios:0};
+  });
+  const E=envios.map(e=>{ const clp=+e.clp||0, tasa=+e.tasa||0; const bs= ok(+e.bs)&&+e.bs>0 ? +e.bs : clp*tasa;
+    return {...e, clp, tasa, bs, mes:(e.fecha||'').slice(0,7), costo:null, residual:null, partes:[], cubierto:0, falta:0}; });
+
+  // inventario de Bs por compra: primero en entrar, primero en salir
+  const porFecha=(a,b)=> (a.fecha||'').localeCompare(b.fecha||'') || ((a.createdAt||0)-(b.createdAt||0));
+  const cola=L.filter(l=>l.tieneBs&&l.tasaCosto).sort(porFecha);
+  cola.forEach(l=>{ l.restante=l.bsNet; });
+  let i=0;
+  for(const e of [...E].sort(porFecha)){
+    let falta=e.bs, costo=0;
+    while(falta>0.005 && i<cola.length){
+      const l=cola[i], toma=Math.min(falta,l.restante);
+      if(toma>0){ e.partes.push({loteId:l.id, fecha:l.fecha, bs:toma, tasa:l.tasaCosto, clp:toma/l.tasaCosto}); costo+=toma/l.tasaCosto; l.restante-=toma; l.usado+=toma; l.nEnvios++; falta-=toma; }
+      if(l.restante<=0.005){ l.restante=0; i++; }
+    }
+    e.cubierto=e.bs-Math.max(0,falta); e.falta= falta>0.005? falta : 0; e.costoParcial=costo;
+    if(!e.falta && e.bs>0){ e.costo=costo; e.residual=e.clp-costo; e.tasaCostoAplicada=e.bs/costo; }
+  }
+  // compras USDT con Bs: referencia para comparar las compras directas de Bs y para estimar USDT equivalentes
+  const colaUSDT=cola.filter(l=>!l.esBs);
+  const refUSDT=f=> [...colaUSDT].reverse().find(u=>(u.fecha||'')<=(f||'')) || colaUSDT[0] || null;
+  const ultUSDTvend=[...colaUSDT].reverse().find(u=>u.vend>0);
+  L.forEach(l=>{ l.estadoStock= !l.tieneBs? 'por vender' : l.restante<=0? 'agotada' : l.usado>0? 'en uso' : 'disponible';
+    if(l.esBs){
+      const r=refUSDT(l.fecha);
+      if(r&&l.tieneBs){ l.refTasa=r.tasaCosto; l.ahorro=l.bsNet/r.tasaCosto-l.clp; }
+      l.usdtRestante= ultUSDTvend? l.restante/(ultUSDTvend.bsNet/ultUSDTvend.vend) : null;
+    } else l.usdtRestante= l.tieneBs? (l.bsNet>0&&l.vend>0? l.restante/(l.bsNet/l.vend) : 0) : l.vend; });
+  const stockBs=cola.reduce((s,l)=>s+l.restante,0);
+  const stockCosto=cola.reduce((s,l)=>s+(l.restante>0? l.restante/l.tasaCosto : 0),0);
+  const ultimoLote=L.filter(l=>!l.esBs).sort((a,b)=> porFecha(b,a))[0];
+  const ultimoConBs=[...cola].reverse()[0];
+  const ultimoUSDTConBs=[...colaUSDT].reverse()[0];
+  const tasaActual= stockBs>0? stockBs/stockCosto : (ultimoConBs? ultimoConBs.tasaCosto : null);
+  const faltaBs=E.reduce((s,e)=>s+e.falta,0);
+
+  // por mes
+  const meses={};
+  const M=k=> meses[k] || (meses[k]={mes:k,vol:0,n:0,bsEnv:0,residual:0,volCost:0,sinCosto:0,ganUSDT:0,trabUSDT:0,trabCLP:0,compras:0,clpCompras:0,usdtComprados:0,clpUsdtConBs:0,bsNetUsdt:0,comprasBs:0,clpBs:0,bsBs:0,bsNetBs:0,trabBs:0,ahorroBs:0,clientes:new Set(),nuevos:0});
+  E.forEach(e=>{ const m=M(e.mes); m.vol+=e.clp; m.n++; m.bsEnv+=e.bs; m.clientes.add(e.clienteId); if(e.residual!=null){ m.residual+=e.residual; m.volCost+=e.clp; } else m.sinCosto++; });
+  L.forEach(l=>{ const m=M(l.mes); m.trabCLP+=l.costoTrab;
+    if(l.esBs){ m.comprasBs++; m.clpBs+=l.clp; m.bsBs+=l.bs; m.bsNetBs+=l.bsNet; m.trabBs+=l.bsTrab; m.ahorroBs+=(l.ahorro||0); return; }
+    m.ganUSDT+=l.ganUSDT; m.trabUSDT+=l.trab; m.compras++; m.clpCompras+=l.clp; m.usdtComprados+=l.usdt;
+    if(l.tieneBs){ m.clpUsdtConBs+=l.clp; m.bsNetUsdt+=l.bsNet; } });
+
+  // por cliente
+  const cli={};
+  [...E].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(e=>{
+    const c= cli[e.clienteId] || (cli[e.clienteId]={id:e.clienteId,n:0,total:0,residual:0,primero:e.fecha,ultimo:e.fecha,meses:new Set()});
+    c.n++; c.total+=e.clp; c.residual+=(e.residual||0); c.ultimo=e.fecha; c.meses.add(e.mes);
+  });
+  Object.values(cli).forEach(c=>{ const k=(c.primero||'').slice(0,7); if(meses[k]) meses[k].nuevos++; c.dias=diasDesde(c.ultimo); });
+
+  Object.values(meses).forEach(m=>{ m.ganancia=m.ganUSDT+m.residual; m.margen= m.vol? m.ganancia/m.vol : null; m.precioUSDT= m.usdtComprados? m.clpCompras/m.usdtComprados : null; m.nClientes=m.clientes.size; });
+
+  const bsPend=E.filter(e=>e.estado!=='pagado').reduce((s,e)=>s+e.bs,0);
+  const lotesSinBs=L.filter(l=>!l.esBs&&!l.tieneBs);
+  const usdtPorVender=lotesSinBs.reduce((s,l)=>s+l.vend,0);
+  const usdtEnStock=L.reduce((s,l)=>s+(l.tieneBs&&ok(l.usdtRestante)?l.usdtRestante:0),0);
+  return {L,E,meses,cli,tasaActual,ultimoLote,ultimoConBs,ultimoUSDTConBs,stockBs,stockCosto,faltaBs,bsPend,lotesSinBs,usdtPorVender,usdtEnStock};
+}
+function usdRate(mes){ const m=C.meses[mes]; return (m&&m.precioUSDT) || (C.ultimoLote&&C.ultimoLote.precio) || +S.config.dolarRef || 920; }
+const SUMABLES=['vol','n','residual','ganUSDT','trabUSDT','trabCLP','sinCosto','compras','nuevos','clpUsdtConBs','bsNetUsdt','comprasBs','clpBs','bsBs','bsNetBs','trabBs','ahorroBs'];
+function resumen(mes){
+  if(mes){ if(C.meses[mes]) return C.meses[mes]; const z={mes,ganancia:0,margen:null,nClientes:0}; SUMABLES.forEach(k=>z[k]=0); return z; }
+  const r={mes:''}; SUMABLES.forEach(k=>r[k]=0);
+  Object.values(C.meses).forEach(m=>SUMABLES.forEach(k=> r[k]+=m[k]));
+  r.ganancia=r.ganUSDT+r.residual; r.margen=r.vol? r.ganancia/r.vol : null; r.nClientes=Object.keys(C.cli).length; return r;
+}
+window.__calcular = calcular; // para pruebas
+
+/* ============================================================
+   3) VISTAS
+   ============================================================ */
+let renderPend=false;
+function render(){ if(renderPend) return; renderPend=true; requestAnimationFrame(()=>{ renderPend=false; _render(); }); }
+function _render(){
+  C=calcular(S.lotes,S.envios,S.config);
+  // selector de mes
+  const ms=new Set([mesActual(), ...C.E.map(e=>e.mes), ...C.L.map(l=>l.mes)].filter(Boolean));
+  const opts=[...ms].sort().reverse();
+  const sel=document.getElementById('mesSel');
+  sel.innerHTML=opts.map(k=>`<option value="${k}" ${k===S.mes?'selected':''}>${fMes(k)}</option>`).join('')+`<option value="" ${S.mes===''?'selected':''}>Todo el historial</option>`;
+  document.querySelectorAll('#tabs button').forEach(b=> b.classList.toggle('on', b.dataset.v===S.view));
+  document.getElementById('dlClientes').innerHTML=S.clientes.map(c=>`<option value="${esc(c.rut||c.id)}">${esc(c.nombre)}</option>`).join('');
+  const v=document.getElementById('view');
+  v.innerHTML=({inicio:vInicio,envios:vEnvios,compras:vCompras,clientes:vClientes,ajustes:vAjustes}[S.view]||vInicio)();
+  if(S.view==='envios'||S.view==='clientes'){ const q=document.getElementById('q'); if(q&&S._focusQ){ q.focus(); q.setSelectionRange(q.value.length,q.value.length); } }
+}
+function go(vw){ S.view=vw; S._focusQ=false; render(); window.scrollTo(0,0); }
+
+function barras(serie, color){
+  const W=600,H=170,base=H-22; const max=Math.max(1,...serie.map(s=>Math.abs(s.v))); const bw=(W-20)/serie.length;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">`+serie.map((s,i)=>{
+    const h=Math.max(s.v?2:0,(Math.abs(s.v)/max)*(base-24)); const x=10+i*bw+bw*.15, w=bw*.7;
+    const y= s.v>=0? base-h : base; const col= s.v<0?'var(--bad)':color;
+    return `<rect x="${x}" y="${s.v>=0?y:base}" width="${w}" height="${s.v>=0?h:Math.min(h,20)}" rx="3" fill="${col}"><title>${s.label}: ${s.tip}</title></rect>`+
+      `<text x="${x+w/2}" y="${H-6}" text-anchor="middle">${s.label}</text>`+
+      (s.v? `<text x="${x+w/2}" y="${(s.v>=0?y:base)-4}" text-anchor="middle">${compact(s.v)}</text>`:'');
+  }).join('')+`<line x1="10" x2="${W-10}" y1="${base}" y2="${base}" stroke="var(--line)"/></svg>`;
+}
+function ultimos12(fin){
+  const [y,m]=(fin||mesActual()).split('-').map(Number); const out=[];
+  for(let i=11;i>=0;i--){ const d=new Date(y,m-1-i,1); out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  return out;
+}
+
+function vInicio(){
+  const r=resumen(S.mes), usd=usdRate(S.mes||mesActual());
+  const ganUSD=r.ganancia/usd, meta=+S.config.metaUSD||5000;
+  const pctMeta=Math.max(0,Math.min(1,ganUSD/meta));
+  const ta=C.tasaActual, td=+S.config.tasaDia;
+  const spread= ta&&td? 1-td/ta : null;
+  const inact=Object.values(C.cli).filter(c=>c.dias!=null&&c.dias>(+S.config.diasInactivo||30)).length;
+  const ticket=r.n? r.vol/r.n : null;
+  const ks=ultimos12(S.mes);
+  const sG=ks.map(k=>{const m=C.meses[k]; const v=m?m.ganancia:0; return {label:MESES[+k.slice(5)-1],v,tip:fCLP(v)};});
+  const sV=ks.map(k=>{const m=C.meses[k]; const v=m?m.vol:0; return {label:MESES[+k.slice(5)-1],v,tip:fCLP(v)};});
+  const top=Object.values(C.cli).map(c=>{ const es=C.E.filter(e=>e.clienteId===c.id && (!S.mes||e.mes===S.mes)); return {c, v:es.reduce((s,e)=>s+e.clp,0), n:es.length}; }).filter(x=>x.n).sort((a,b)=>b.v-a.v).slice(0,5);
+  const nombre=id=> (S.clientes.find(c=>c.id===id)||{}).nombre || id;
+  const alerts=[];
+  if(C.faltaBs>0) alerts.push(`<div class="alert bad"><b>Faltan ${fBs(C.faltaBs)}</b> para cubrir envíos ya registrados. Compra USDT y regístrala: el costo de esos envíos se completa solo.</div>`);
+  if(C.lotesSinBs.length) alerts.push(`<div class="alert info">${C.lotesSinBs.length} compra(s) sin Bs recibidos registrados (${fUSDT(C.usdtPorVender)} por vender). <a href="#" onclick="App.go('compras');return false">Completar</a></div>`);
+  const activos=C.L.filter(l=>l.tieneBs&&l.restante>0).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  const alcanza= td? C.stockBs/td : null;
+  return `
+  ${alerts.join('')}
+  <div class="grid">
+    <div class="card kpi hero"><h3>Ganancia · ${fMes(S.mes)}</h3><div class="v ${r.ganancia<0?'neg':''}">${fCLP(r.ganancia)}</div><div class="s">≈ ${fUSD(ganUSD)} · USDT propios ${fCLP(r.ganUSDT)} · residual ${fCLP(r.residual)}</div></div>
+    <div class="card kpi gold"><h3>Stock en Venezuela</h3><div class="v">${fBs(C.stockBs)}</div><div class="s">≈ ${fUSDT(C.usdtEnStock)} · alcanza para ≈ ${fCLP(alcanza)} a la tasa del día${C.usdtPorVender?` · ${fUSDT(C.usdtPorVender)} por vender`:''}</div></div>
+    <div class="card kpi"><h3>Meta mensual</h3><div class="v">${Math.round(pctMeta*100)}%</div><div class="progress"><i style="width:${pctMeta*100}%"></i></div><div class="s">${fUSD(ganUSD)} de ${fUSD(meta)}${S.mes?'':' (historial total)'}</div></div>
+    <div class="card kpi"><h3>Volumen enviado</h3><div class="v">${fCLP(r.vol)}</div><div class="s">${r.n} envíos · ticket promedio ${fCLP(ticket)}</div></div>
+    <div class="card kpi"><h3>Margen real</h3><div class="v">${fPct(r.margen)}</div><div class="s">Ganancia ÷ volumen enviado</div></div>
+    <div class="card kpi"><h3>Clientes</h3><div class="v">${r.nClientes||0}</div><div class="s">activos en el período · ${r.nuevos||0} nuevos · ${inact} inactivos (+${S.config.diasInactivo} días)</div></div>
+    <div class="card kpi"><h3>Comisión trabajador</h3><div class="v">${fUSDT(r.trabUSDT)}</div><div class="s">${r.trabBs?`+ ${fBs(r.trabBs)} en compras de Bs · `:''}≈ ${fCLP(r.trabCLP)} en total · ${r.compras} compras USDT${r.comprasBs?` · ${r.comprasBs} de Bs`:''}</div></div>
+    <div class="card kpi"><h3>Compras directas de Bs</h3><div class="v">${fBs(r.bsNetBs)}</div><div class="s">${r.comprasBs? `netos · ${r.comprasBs} compras · pagaste ${fCLP(r.clpBs)} · ${fPct(r.bsNetBs/(r.bsNetBs+r.bsNetUsdt))} de los Bs del período` : 'Sin compras de Bs en el período'}</div></div>
+    <div class="card kpi"><h3>Tasa de costo: compra de Bs</h3><div class="v">${fT(r.clpBs? r.bsNetBs/r.clpBs : null)}</div><div class="s">Bs netos por CLP · vía USDT: <b>${fT(r.clpUsdtConBs? r.bsNetUsdt/r.clpUsdtConBs : null)}</b>${r.comprasBs&&r.ahorroBs?` · ${r.ahorroBs>=0?'ahorro':'sobrecosto'} vs USDT ${fCLP(Math.abs(r.ahorroBs))}`:''}</div></div>
+    ${C.E.some(e=>e.estado!=='pagado')? `<div class="card kpi"><h3>Pendientes por pagar</h3><div class="v">${fBs(C.bsPend)}</div><div class="s">${C.E.filter(e=>e.estado!=='pagado').length} envíos sin marcar como pagados</div></div>` : ''}
+    <div class="card kpi"><h3>Tasa de costo del stock</h3><div class="v">${fT(ta)}</div><div class="s">Bs por CLP · última compra ${fT(C.ultimoConBs&&C.ultimoConBs.tasaCosto)}</div></div>
+  </div>
+
+  <div class="sec card">
+    <h3>Stock por compra (se usa primero la más antigua)</h3>
+    ${activos.length? `<div class="tablewrap" style="border:0"><table><thead><tr><th>Compra</th><th class="n">Tasa costo</th><th class="n">Bs netos</th><th class="n">Quedan</th><th>Uso</th></tr></thead><tbody>${activos.map(l=>`<tr class="click" onclick="App.abrirLote('${l.id}')"><td>${fFecha(l.fecha)} ${tipoBadge(l)}</td><td class="n">${fT(l.tasaCosto)}</td><td class="n">${fBs(l.bsNet)}</td><td class="n"><b>${fBs(l.restante)}</b>${ok(l.usdtRestante)?`<div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div>`:''}</td><td><div class="stockbar"><i style="width:${Math.round(l.usado/l.bsNet*100)}%"></i></div><span class="muted small">${Math.round(l.usado/l.bsNet*100)}% usado</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="muted small">${C.faltaBs>0?'Sin stock: los envíos registrados ya consumieron todo.':'Sin stock. Registra una compra con los Bs recibidos.'}</div>`}
+  </div>
+
+  <div class="sec card">
+    <h3>Tasa del día vs. costo</h3>
+    <div class="row"><span>Tasa del día: <b>${fT(td)}</b></span><span class="muted">·</span><span>Residual estimado por envío: <b class="${spread<0?'neg':'pos'}">${fPct(spread)}</b></span><span class="muted small">(además de tus USDT por compra)</span></div>
+    ${ta?`<div class="small muted" style="margin-top:6px">Tasa para un residual de 1%: <b>${fT(ta*.99)}</b> · 2%: <b>${fT(ta*.98)}</b> · 3%: <b>${fT(ta*.97)}</b></div>`:'<div class="small muted">Registra una compra con Bs recibidos para calcular la tasa de costo.</div>'}
+  </div>
+
+  <div class="sec grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+    <div class="card chart"><h3>Ganancia por mes (CLP)</h3>${barras(sG,'var(--gold)')}</div>
+    <div class="card chart"><h3>Volumen por mes (CLP)</h3>${barras(sV,'var(--brand)')}</div>
+  </div>
+
+  <div class="sec card"><h3>Top clientes · ${fMes(S.mes)}</h3>
+    ${top.length? `<div class="tablewrap" style="border:0"><table><tbody>${top.map(x=>`<tr class="click" onclick="App.abrirCliente('${esc(x.c.id)}')"><td>${esc(nombre(x.c.id))}</td><td class="n">${x.n} envíos</td><td class="n">${fCLP(x.v)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted small">Sin envíos en este período.</div>'}
+  </div>`;
+}
+
+function tipoBadge(l){ return l.esBs? '<span class="badge gold">Bs</span>' : '<span class="badge brand">USDT</span>'; }
+function hayPendientes(){ return C.E.some(e=>e.estado!=='pagado'); }
+function filtrarEnvios(){
+  const q=S.q.trim().toLowerCase();
+  return C.E.filter(e=> (!S.mes||e.mes===S.mes) && (S.estado==='todos'||(S.estado==='pendiente'? e.estado!=='pagado' : e.estado==='pagado')) &&
+    (!q || [e.clienteNombre,e.clienteRut,e.beneficiario&&e.beneficiario.nombre,e.comprobante].join(' ').toLowerCase().includes(q)))
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+}
+function vEnvios(){
+  const hp=hayPendientes(); if(!hp) S.estado='todos';
+  const es=filtrarEnvios(); const t=es.reduce((a,e)=>({clp:a.clp+e.clp,bs:a.bs+e.bs,res:a.res+(e.residual||0)}),{clp:0,bs:0,res:0});
+  return `
+  <div class="row" style="margin-bottom:10px">
+    <input id="q" placeholder="Buscar cliente, RUT, beneficiario…" value="${esc(S.q)}" style="max-width:320px" oninput="App.buscar(this.value)">
+    ${hp?`<select style="width:auto" onchange="App.setEstado(this.value)">
+      <option value="todos" ${S.estado==='todos'?'selected':''}>Todos</option>
+      <option value="pendiente" ${S.estado==='pendiente'?'selected':''}>Pendientes</option>
+      <option value="pagado" ${S.estado==='pagado'?'selected':''}>Pagados</option>
+    </select>`:''}
+    <span class="spacer"></span><span class="muted small">${es.length} envíos · ${fMes(S.mes)}</span>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Fecha</th><th>Cliente</th><th>Beneficiario</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th class="n">Residual</th>${hp?'<th>Estado</th>':''}</tr></thead>
+    <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')">
+      <td>${fFecha(e.fecha)}</td><td>${esc(e.clienteNombre)}<div class="muted small">${esc(e.clienteRut)}</div></td>
+      <td>${esc(e.beneficiario&&e.beneficiario.nombre)}<div class="muted small">${esc(e.beneficiario&&e.beneficiario.banco)}</div></td>
+      <td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td><td class="n">${fBs(e.bs)}</td>
+      <td class="n ${e.residual<0?'neg':''}">${e.falta? `<span class="badge bad">faltan ${fBs(e.falta)}</span>` : e.residual==null?'<span class="muted">—</span>' : fCLP(e.residual)}${e.partes.length>1?`<div class="muted small">${e.partes.length} compras</div>`:''}</td>
+      ${hp?`<td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td>`:''}</tr>`).join('') || `<tr><td colspan="${hp?8:7}" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
+    ${es.length?`<tfoot><tr><td colspan="3">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td><td class="n">${fCLP(t.res)}</td>${hp?'<td></td>':''}</tr></tfoot>`:''}
+  </table></div>
+  <p class="muted small">“Faltan Bs”: el stock no alcanzó para ese envío; su residual aparece al registrar la compra que lo cubre. “2 compras”: el envío usó Bs de dos compras, cada parte con su tasa.${hp?' Toca el estado para marcar pagado/pendiente.':''}</p>`;
+}
+
+function vCompras(){
+  const ls=C.L.filter(l=>!S.mes||l.mes===S.mes).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const us=ls.filter(l=>!l.esBs), bz=ls.filter(l=>l.esBs);
+  const sum=(arr,k)=>arr.reduce((s,l)=>s+(l[k]||0),0);
+  const usBs=us.filter(l=>l.tieneBs);
+  const tUS={n:us.length, clp:sum(us,'clp'), usdt:sum(us,'usdt'), trab:sum(us,'trab'), mio:sum(us,'mio'), bs:sum(us,'bs'), bsNet:sum(us,'bsNet'), gan:sum(us,'ganUSDT'), clpConBs:sum(usBs,'clp')};
+  const tBZ={n:bz.length, clp:sum(bz,'clp'), bs:sum(bz,'bs'), bsNet:sum(bz,'bsNet'), trab:sum(bz,'bsTrab'), ahorro:sum(bz,'ahorro')};
+  const conBs=ls.filter(l=>l.tieneBs), bsNetTot=sum(conBs,'bsNet'), clpConBsTot=sum(conBs,'clp');
+  const badge=l=>({ 'por vender':'warn', 'agotada':'', 'en uso':'gold', 'disponible':'ok' }[l.estadoStock]);
+  return `
+  <div class="grid" style="margin-bottom:12px">
+    <div class="card kpi"><h3>Vía USDT (Binance)</h3><div class="v">${fBs(tUS.bsNet)}</div><div class="s">netos · ${tUS.n} compras · ${fCLP(tUS.clp)} · tasa costo ${fT(tUS.clpConBs? tUS.bsNet/tUS.clpConBs : null)}</div></div>
+    <div class="card kpi gold"><h3>Compra directa de Bs</h3><div class="v">${fBs(tBZ.bsNet)}</div><div class="s">netos · ${tBZ.n} compras · ${fCLP(tBZ.clp)} · tasa costo ${fT(tBZ.clp? tBZ.bsNet/tBZ.clp : null)}</div></div>
+    <div class="card kpi"><h3>Bs comprados directo</h3><div class="v">${fPct(bsNetTot? tBZ.bsNet/bsNetTot : null)}</div><div class="s">del total de Bs netos del período${tBZ.n&&tBZ.ahorro?` · ${tBZ.ahorro>=0?'ahorro':'sobrecosto'} vs USDT ${fCLP(Math.abs(tBZ.ahorro))}`:''}</div></div>
+  </div>
+  <div class="row" style="margin-bottom:10px"><span class="muted small">${ls.length} compras · ${fMes(S.mes)}</span></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Fecha</th><th>Stock</th><th class="n">Quedan</th><th class="n">Bs netos</th><th class="n">Tasa costo</th><th class="n">CLP</th><th class="n">USDT</th><th class="n">Precio / tasa</th><th class="n">Trab.</th><th class="n">Tuyos</th><th class="n">Bs recibidos</th><th class="n">Ganancia USDT</th></tr></thead>
+    <tbody>${ls.map(l=>{ const pct=l.tieneBs&&l.bsNet? Math.round(l.usado/l.bsNet*100):0;
+      return `<tr class="click" onclick="App.abrirLote('${l.id}')">
+      <td>${fFecha(l.fecha)} ${tipoBadge(l)}${l.esBs&&l.destinatario&&l.destinatario.nombre?`<div class="muted small">a ${esc(l.destinatario.nombre)}</div>`:''}</td>
+      <td><span class="badge ${badge(l)}">${l.estadoStock}</span>${l.tieneBs?`<div class="stockbar"><i style="width:${pct}%"></i></div>`:''}</td>
+      <td class="n">${l.tieneBs?`<b>${fBs(l.restante)}</b>${ok(l.usdtRestante)?`<div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div>`:''}`:`${fUSDT(l.vend)}<div class="muted small">por vender</div>`}</td>
+      <td class="n">${l.tieneBs?fBs(l.bsNet):'—'}</td><td class="n">${fT(l.tasaCosto)}</td>
+      <td class="n">${fCLP(l.clp)}</td>
+      ${l.esBs
+        ? `<td class="n muted">—</td><td class="n">${fT(l.tasa)}<div class="muted small">Bs por CLP</div></td><td class="n">${l.bsTrab?fBs(l.bsTrab):'—'}</td><td class="n muted">—</td><td class="n">${fBs(l.bs)}</td><td class="n">${l.ahorro!=null?`<span class="muted small">${l.ahorro>=0?'ahorro':'sobrecosto'}</span> <span class="${l.ahorro<0?'neg':''}">${fCLP(Math.abs(l.ahorro))}</span>`:'—'}</td>`
+        : `<td class="n">${nf2.format(l.usdt)}</td><td class="n">${fCLP(l.precio)}</td><td class="n">${nf2.format(l.trab)}</td><td class="n">${nf2.format(l.mio)}</td><td class="n">${l.tieneBs?fBs(l.bs):'—'}</td><td class="n">${fCLP(l.ganUSDT)}</td>`}</tr>`; }).join('') || `<tr><td colspan="12" class="muted">No hay compras. Usa “+ Compra”.</td></tr>`}</tbody>
+    ${ls.length?`<tfoot><tr><td>Total</td><td></td><td class="n">${fBs(ls.reduce((s,l)=>s+l.restante,0))}</td><td class="n">${fBs(bsNetTot)}</td><td class="n">${fT(clpConBsTot? bsNetTot/clpConBsTot : null)}</td><td class="n">${fCLP(tUS.clp+tBZ.clp)}</td><td class="n">${nf2.format(tUS.usdt)}</td><td class="n">${fCLP(tUS.usdt?tUS.clp/tUS.usdt:null)}</td><td class="n">${nf2.format(tUS.trab)}${tBZ.trab?`<div class="muted small">+ ${fBs(tBZ.trab)}</div>`:''}</td><td class="n">${nf2.format(tUS.mio)}</td><td class="n">${fBs(tUS.bs+tBZ.bs)}</td><td class="n">${fCLP(tUS.gan)}</td></tr></tfoot>`:''}
+  </table></div>
+  <p class="muted small">Tasa de costo = Bs netos ÷ CLP gastados. En compras de USDT: Bs netos = Bs recibidos × (1 − ${S.config.comisionBanco}%). En compras directas de Bs: Bs netos = (Bs recibidos − Bs del trabajador) × (1 − ${S.config.comisionBanco}%). Los envíos consumen primero el stock de la compra más antigua, sin importar el tipo. “Ahorro vs USDT” = lo que te habría costado conseguir esos mismos Bs con tu última compra de USDT, menos lo que pagaste. Es informativo: esa diferencia ya está dentro del residual de los envíos, no se suma otra vez a la ganancia.</p>`;
+}
+
+function vClientes(){
+  const q=S.q.trim().toLowerCase(), lim=+S.config.diasInactivo||30;
+  const refCount={}; S.clientes.forEach(c=>{ if(c.referidoPor) refCount[c.referidoPor]=(refCount[c.referidoPor]||0)+1; });
+  const rows=S.clientes.map(c=>({c, a:C.cli[c.id]||{n:0,total:0,residual:0,dias:null}}))
+    .filter(x=> (!q || [x.c.nombre,x.c.rut,x.c.telefono].join(' ').toLowerCase().includes(q)) && (!S.soloInactivos || (x.a.dias!=null&&x.a.dias>lim)))
+    .sort((a,b)=> b.a.total-a.a.total);
+  const nom=id=> (S.clientes.find(c=>c.id===id)||{}).nombre||'';
+  return `
+  <div class="row" style="margin-bottom:10px">
+    <input id="q" placeholder="Buscar nombre, RUT, teléfono…" value="${esc(S.q)}" style="max-width:320px" oninput="App.buscar(this.value)">
+    <label class="row small" style="margin:0;color:var(--text)"><input type="checkbox" style="width:auto" ${S.soloInactivos?'checked':''} onchange="App.setInactivos(this.checked)"> Solo inactivos (+${lim} días)</label>
+    <span class="spacer"></span><span class="muted small">${rows.length} clientes</span>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Cliente</th><th>Teléfono</th><th class="n">Envíos</th><th class="n">Total CLP</th><th class="n">Residual</th><th>Último envío</th><th>Origen</th><th class="n">Referidos</th></tr></thead>
+    <tbody>${rows.map(({c,a})=>`<tr class="click" onclick="App.abrirCliente('${esc(c.id)}')">
+      <td>${esc(c.nombre)}<div class="muted small">${esc(c.rut||c.id)}</div></td><td>${esc(c.telefono||'')}</td>
+      <td class="n">${a.n}</td><td class="n">${fCLP(a.total)}</td><td class="n">${fCLP(a.residual)}</td>
+      <td>${a.ultimo?fFecha(a.ultimo).slice(0,8):'—'} ${a.dias!=null?`<span class="badge ${a.dias>lim?'bad':'ok'}">${a.dias} d</span>`:''}</td>
+      <td class="small">${c.referidoPor? 'Ref: '+esc(nom(c.referidoPor)) : esc(c.origen||'')}</td><td class="n">${refCount[c.id]||0}</td></tr>`).join('') || `<tr><td colspan="8" class="muted">Sin clientes. Se crean automáticamente al registrar un envío.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function vAjustes(){
+  const c=S.config;
+  return `
+  <div class="card">
+    <h3>Parámetros</h3>
+    <div class="f2">
+      <div><label>Tasa del día (Bs por CLP)</label><input id="cfTasa" inputmode="decimal" value="${fT(c.tasaDia)}"></div>
+      <div><label>Comisión bancaria (%)</label><input id="cfBanco" inputmode="decimal" value="${c.comisionBanco}"></div>
+      <div><label>Meta de ganancia mensual (USD)</label><input id="cfMeta" inputmode="numeric" value="${c.metaUSD}"></div>
+      <div><label>Cliente inactivo después de (días)</label><input id="cfDias" inputmode="numeric" value="${c.diasInactivo}"></div>
+      <div><label>Dólar de referencia (CLP), si no hay compras</label><input id="cfDolar" inputmode="numeric" value="${c.dolarRef}"></div>
+    </div>
+    <label>Tramos de comisión por compra (USDT)</label>
+    <div class="tablewrap"><table><thead><tr><th>Desde (≥)</th><th>Hasta (&lt;)</th><th>Trabajador</th><th>Tú</th><th></th></tr></thead>
+      <tbody id="tramosBody">${(c.tramos||[]).map((t,i)=>filaTramo(t)).join('')}</tbody></table></div>
+    <div class="row" style="margin-top:8px"><button class="btn sm" onclick="App.addTramo()">+ Tramo</button><span class="muted small">Deja “Hasta” vacío para “sin límite”.</span></div>
+    <div class="row" style="margin-top:14px"><button class="btn pri" onclick="App.guardarAjustes()">Guardar ajustes</button></div>
+  </div>
+
+  <div class="card sec">
+    <h3>Respaldo y exportación</h3>
+    <div class="row">
+      <button class="btn" onclick="App.exportJSON()">Respaldo completo (JSON)</button>
+      <button class="btn" onclick="App.exportCSV('envios')">Envíos (CSV)</button>
+      <button class="btn" onclick="App.exportCSV('lotes')">Compras (CSV)</button>
+      <button class="btn" onclick="App.exportCSV('clientes')">Clientes (CSV)</button>
+    </div>
+    <label>Restaurar / importar respaldo JSON</label>
+    <input type="file" accept=".json,application/json" onchange="App.importJSON(this.files[0])">
+    <div class="hint">Agrega o reemplaza registros con el mismo ID. No borra nada.</div>
+  </div>
+
+  <div class="card sec">
+    <h3>Sesión</h3>
+    <div class="row"><span>${MODO_LOCAL?'Modo local: los datos están solo en este navegador.':'Conectado a Firebase como '+esc(S.email||'')}</span><span class="spacer"></span>${MODO_LOCAL?'':'<button class="btn" onclick="App.salir()">Cerrar sesión</button>'}</div>
+  </div>`;
+}
+function filaTramo(t){ return `<tr><td><input class="tDesde" inputmode="decimal" value="${t.desde??''}"></td><td><input class="tHasta" inputmode="decimal" value="${t.hasta??''}"></td><td><input class="tTrab" inputmode="decimal" value="${t.trab??0}"></td><td><input class="tMio" inputmode="decimal" value="${t.mio??0}"></td><td><button class="btn sm danger" onclick="this.closest('tr').remove()">×</button></td></tr>`; }
+
+/* ============================================================
+   4) FORMULARIOS
+   ============================================================ */
+const dlg=document.getElementById('dlg');
+function abrirDlg(html){ dlg.innerHTML=html; if(!dlg.open) dlg.showModal(); }
+function cerrarDlg(){ dlg.close(); }
+dlg.addEventListener('click', e=>{ if(e.target===dlg) cerrarDlg(); });
+
+function abrirEnvio(id){
+  const e= id? S.envios.find(x=>x.id===id) : null;
+  const ben=(e&&e.beneficiario)||{};
+  abrirDlg(`
+  <div class="dlg-h"><h2>${e?'Editar envío':'Nuevo envío'}</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <form id="fEnv" class="dlg-b" autocomplete="off" data-id="${e?e.id:''}">
+    <div class="f2">
+      <div><label>RUT del cliente</label><input name="rut" list="dlClientes" required value="${esc(e?e.clienteRut:'')}" oninput="App.rutInput(this.value)"><div class="hint" id="rutHint"></div></div>
+      <div><label>Nombre del cliente</label><input name="nombre" required value="${esc(e?e.clienteNombre:'')}"></div>
+      <div><label>Monto que envía (CLP)</label><input name="clp" inputmode="numeric" required value="${e?e.clp:''}" oninput="App.calcEnvio()"></div>
+      <div><label>Tasa para este cliente (Bs por CLP)</label><input name="tasa" inputmode="decimal" required placeholder="Ej: 0.9500" value="${e?fT(e.tasa):''}" oninput="App.calcEnvio()">
+        <div class="hint">Tasa del día: <a href="#" onclick="App.usarTasaDia();return false">${fT(S.config.tasaDia)} (usar)</a> · costo del stock: ${fT(C.tasaActual)}</div></div>
+    </div>
+    <div id="origenBox">
+      <label>¿Cómo llegó? (solo clientes nuevos)</label>
+      <select name="origen">
+        <option value="">Sin dato</option>
+        <optgroup label="Recomendado por cliente">${S.clientes.map(c=>`<option value="c:${esc(c.id)}">${esc(c.nombre)}</option>`).join('')}</optgroup>
+        <optgroup label="Otro canal"><option value="o:Redes sociales">Redes sociales</option><option value="o:WhatsApp / chatbot">WhatsApp / chatbot</option><option value="o:Agente">Agente</option><option value="o:Otro">Otro</option></optgroup>
+      </select>
+    </div>
+    <div class="calc" id="envCalc"></div>
+    <div class="f2">
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(e?e.fecha:ahoraLocal())}" onchange="App.calcEnvio()"></div>
+      ${e?`<div><label>Estado</label><select name="estado"><option value="pendiente" ${e.estado!=='pagado'?'selected':''}>Pendiente</option><option value="pagado" ${e.estado==='pagado'?'selected':''}>Pagado</option></select></div>`:''}
+    </div>
+    <details class="mas" id="masDatos" ${e&&(ben.nombre||ben.cedula||ben.cuenta||e.comprobante||e.nota)?'open':''}>
+      <summary>Más datos <span class="muted small">(opcional: beneficiario, teléfono, comprobante, nota)</span></summary>
+      <label>Teléfono del cliente (WhatsApp)</label><input name="telefono" inputmode="tel" value="">
+      <div id="benSelBox" class="hidden"><label>Beneficiarios guardados</label><select id="benSel" onchange="App.usarBen(this.value)"></select></div>
+      <div class="f2">
+        <div><label>Beneficiario: nombre</label><input name="bNombre" value="${esc(ben.nombre||'')}"></div>
+        <div><label>Cédula</label><input name="bCedula" value="${esc(ben.cedula||'')}"></div>
+        <div><label>Banco</label><input name="bBanco" value="${esc(ben.banco||'')}"></div>
+        <div><label>Cuenta / pago móvil</label><input name="bCuenta" value="${esc(ben.cuenta||'')}"></div>
+        <div><label>Teléfono beneficiario</label><input name="bTel" inputmode="tel" value="${esc(ben.telefono||'')}"></div>
+        <div><label>Comprobante (n° de operación)</label><input name="comprobante" value="${esc(e?e.comprobante||'':'')}"></div>
+      </div>
+      <label>Nota</label><input name="nota" value="${esc(e?e.nota||'':'')}">
+    </details>
+  </form>
+  <div class="dlg-f">${e?`<button class="btn danger" onclick="App.borrar('envios','${e.id}')">Eliminar</button>`:''}<span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cancelar</button><button class="btn pri" onclick="App.guardarEnvio(${e?`'${e.id}'`:'null'})">Guardar</button></div>`);
+  if(e) rutInput(e.clienteRut, true);
+  calcEnvio();
+}
+function clientePorRut(r){ const id=normRut(r); return S.clientes.find(c=>c.id===id || normRut(c.rut)===id); }
+function rutInput(v, editando){
+  const f=document.getElementById('fEnv'); if(!f) return;
+  const c=clientePorRut(v), hint=document.getElementById('rutHint');
+  const valido=rutValido(v);
+  if(c){
+    const a=C.cli[c.id];
+    hint.innerHTML=`<span class="pos">Cliente existente</span> · ${a?a.n:0} envíos`;
+    if(!editando || !f.nombre.value) f.nombre.value=c.nombre||'';
+    f.telefono.value=c.telefono||'';
+    document.getElementById('origenBox').classList.add('hidden');
+    const bs=c.beneficiarios||[];
+    const box=document.getElementById('benSelBox');
+    if(bs.length){ box.classList.remove('hidden'); document.getElementById('benSel').innerHTML=`<option value="">— Elegir —</option>`+bs.map((b,i)=>`<option value="${i}">${esc(b.nombre)} · ${esc(b.banco||'')} ${esc(b.cuenta||'')}</option>`).join('')+`<option value="nuevo">+ Nuevo beneficiario</option>`;
+      if(!editando && bs.length===1) usarBen('0'); }
+    else box.classList.add('hidden');
+  } else {
+    hint.innerHTML= v? (valido?'<span class="muted">Cliente nuevo</span>':'<span class="muted">Cliente nuevo · RUT no válido (ok si es otro documento)</span>') : '';
+    document.getElementById('origenBox').classList.remove('hidden');
+    document.getElementById('benSelBox').classList.add('hidden');
+  }
+}
+function usarBen(i){
+  const f=document.getElementById('fEnv'); const c=clientePorRut(f.rut.value); const b= i===''||i==='nuevo'? {} : (c.beneficiarios||[])[+i]||{};
+  f.bNombre.value=b.nombre||''; f.bCedula.value=b.cedula||''; f.bBanco.value=b.banco||''; f.bCuenta.value=b.cuenta||''; f.bTel.value=b.telefono||'';
+  if(i!=='' && i!=='nuevo') document.getElementById('benSel').value=i;
+}
+function usarTasaDia(){ const f=document.getElementById('fEnv'); if(!f) return; f.tasa.value=fT(S.config.tasaDia); calcEnvio(); }
+function calcEnvio(){
+  const f=document.getElementById('fEnv'); if(!f) return;
+  const id=f.dataset.id||null;
+  const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value);
+  const bs= clp>0&&tasa>0? clp*tasa : NaN;
+  const otros=S.envios.filter(x=>x.id!==id);
+  const base=calcular(S.lotes, otros, S.config);
+  const box=document.getElementById('envCalc');
+  let html=`<span>Stock disponible ahora</span><b>${fBs(base.stockBs)}</b>`;
+  if(!(bs>0)){ box.innerHTML=html+`<span>Tasa de costo del stock</span><b>${fT(base.tasaActual)}</b>`; return; }
+  const prev={id:'__p', clp, tasa, bs, fecha:f.fecha.value, estado:'pendiente', createdAt:(id&&(S.envios.find(x=>x.id===id)||{}).createdAt)||Date.now()};
+  const p=calcular(S.lotes, [...otros, prev], S.config).E.find(x=>x.id==='__p');
+  const ref=base.ultimoConBs;
+  const costoEst= p.costoParcial + (p.falta && ref ? p.falta/ref.tasaCosto : 0);
+  const res= (p.falta && !ref) ? null : clp-costoEst;
+  const usdtFalta= p.falta && ref && ref.vend>0 ? p.falta/(ref.bsNet/ref.vend) : null;
+  html+=`<span>Llegan en Venezuela</span><b>${fBs(bs)}</b>`;
+  html+=`<div class="partes">${p.partes.map(x=>`<div><span class="muted">Stock compra ${fFecha(x.fecha).slice(0,8)} · tasa ${fT(x.tasa)}</span><span>${fBs(x.bs)} = ${fCLP(x.clp)}</span></div>`).join('')}
+    ${p.falta?`<div style="color:var(--bad)"><span>Faltan (requiere nueva compra)</span><span><b>${fBs(p.falta)}</b>${usdtFalta?` ≈ ${fUSDT(usdtFalta)} a vender`:''}</span></div>`:''}</div>`;
+  html+=`<span>Costo${p.falta?' estimado':''}</span><b>${fCLP(costoEst)}</b>`;
+  html+=`<span>Residual${p.falta?' estimado':''}</span><b class="${res<0?'neg':'pos'}">${fCLP(res)} ${ok(res)&&clp?'('+fPct(res/clp)+')':''}</b>`;
+  if(ok(res) && res<0) html+=`<div class="partes" style="color:var(--bad)"><b>Con esta tasa pierdes dinero en este envío.</b></div>`;
+  if(p.falta) html+=`<div class="partes muted">Puedes guardarlo igual. El costo real se completa cuando registres la compra que cubre lo que falta${ref?' (estimado con la tasa de tu última compra, '+fT(ref.tasaCosto)+')':''}.</div>`;
+  box.innerHTML=html;
+}
+function guardarEnvio(id){
+  const f=document.getElementById('fEnv'); if(!f.reportValidity()) return;
+  const clp=parseInt0(f.clp.value), tasa=parseNum(f.tasa.value);
+  if(!(clp>0)) return toast('Monto CLP inválido'); if(!(tasa>0)) return toast('Tasa inválida');
+  const rut=f.rut.value.trim(), cid=normRut(rut); if(!cid) return toast('RUT requerido');
+  const existente=clientePorRut(rut);
+  const ben={nombre:f.bNombre.value.trim(), cedula:f.bCedula.value.trim(), banco:f.bBanco.value.trim(), cuenta:f.bCuenta.value.trim(), telefono:f.bTel.value.trim()};
+  const tieneBen=Object.values(ben).some(Boolean);
+  const clienteId= existente? existente.id : cid;
+  // cliente
+  const benef=[...((existente&&existente.beneficiarios)||[])];
+  if(tieneBen){ const k=b=>(b.cedula+'|'+b.cuenta).toLowerCase(); const i=benef.findIndex(b=>k(b)===k(ben)); if(i>=0) benef[i]={...benef[i],...ben}; else benef.push(ben); }
+  const cdata={rut:existente?existente.rut||rut:rut, nombre:f.nombre.value.trim(), beneficiarios:benef, actualizado:Date.now()};
+  if(f.telefono.value.trim()) cdata.telefono=f.telefono.value.trim();
+  if(!existente){ cdata.creado=Date.now(); const o=f.origen.value; if(o.startsWith('c:')){ cdata.referidoPor=o.slice(2); cdata.origen='Referido'; } else if(o.startsWith('o:')) cdata.origen=o.slice(2); }
+  guardar('clientes', clienteId, cdata, true);
+  // envío
+  const prev= id? S.envios.find(x=>x.id===id) : null;
+  const eid= id || uid();
+  guardar('envios', eid, {
+    fecha:f.fecha.value, clienteId, clienteRut:cdata.rut, clienteNombre:cdata.nombre,
+    clp, tasa, bs:Math.round(clp*tasa*100)/100, beneficiario:ben,
+    comprobante:f.comprobante.value.trim(), estado: f.estado? f.estado.value : 'pagado', nota:f.nota.value.trim(),
+    createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()
+  }, false);
+  cerrarDlg(); toast(id?'Envío actualizado':'Envío registrado');
+}
+
+function abrirLote(id, tipoNuevo){
+  const l= id? S.lotes.find(x=>x.id===id) : null;
+  const tipo= l? (l.tipo==='bs'?'bs':'usdt') : (tipoNuevo==='bs'?'bs':'usdt');
+  // al cambiar de tipo en una compra nueva se conservan fecha y CLP ya escritos
+  const fa=document.getElementById('fLote'), keep= !l&&fa&&dlg.open? {fecha:fa.fecha.value, clp:fa.clp.value} : null;
+  const vFecha= l? l.fecha : (keep&&keep.fecha) || ahoraLocal(), vClp= l? l.clp : (keep&&keep.clp) || '';
+  const selector= l? '' : `<div class="row" style="margin-top:12px">
+      <button type="button" class="btn ${tipo==='usdt'?'pri':''}" onclick="App.abrirLote(null,'usdt')">USDT (Binance)</button>
+      <button type="button" class="btn ${tipo==='bs'?'gold':''}" onclick="App.abrirLote(null,'bs')">Bolívares</button></div>`;
+  const dest=(l&&l.destinatario)||{};
+  const campos= tipo==='bs' ? `
+    <div class="f2">
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(vFecha)}"></div>
+      <div><label>CLP que pagaste en Chile</label><input name="clp" inputmode="numeric" required value="${esc(vClp)}" oninput="App.calcLote()"></div>
+      <div><label>Bs recibidos en Venezuela</label><input name="bs" inputmode="decimal" required placeholder="Ej: 100000" value="${l? (+l.bs>0? l.bs : (+l.clp>0&&+l.tasa>0? Math.round(l.clp*l.tasa*100)/100 : '')) : ''}" oninput="App.calcLote()">
+        <div class="hint">Costo de tu última compra USDT: ${fT(C.ultimoUSDTConBs&&C.ultimoUSDTConBs.tasaCosto)}</div></div>
+      <div><label>Comisión del trabajador (Bs)</label><input name="bsTrab" inputmode="decimal" placeholder="0" value="${l&&l.bsTrab?l.bsTrab:''}" oninput="App.calcLote()"></div>
+      <div><label>A quién le transferiste (nombre)</label><input name="dNombre" required value="${esc(dest.nombre||'')}"></div>
+      <div><label>RUT de esa persona (opcional)</label><input name="dRut" value="${esc(dest.rut||'')}" oninput="App.calcLote()"><div class="hint" id="dRutHint"></div></div>
+    </div>` : `
+    <div class="f2">
+      <div><label>Fecha y hora</label><input name="fecha" type="datetime-local" required value="${esc(vFecha)}"></div>
+      <div><label>CLP gastados en Binance</label><input name="clp" inputmode="numeric" required value="${esc(vClp)}" oninput="App.calcLote()"></div>
+      <div><label>USDT comprados</label><input name="usdt" inputmode="decimal" required value="${l?l.usdt:''}" oninput="App.calcLote(true)"><div class="hint" id="tramoHint"></div></div>
+      <div><label>Bs recibidos al vender (puede quedar vacío)</label><input name="bs" inputmode="decimal" value="${l&&l.bs!=null?l.bs:''}" oninput="App.calcLote()"><div class="hint" id="bsHint"></div></div>
+      <div><label>USDT para el trabajador</label><input name="trab" inputmode="decimal" value="${l?l.usdtTrab:''}" oninput="App.calcLote()"></div>
+      <div><label>USDT para ti</label><input name="mio" inputmode="decimal" value="${l?l.usdtMio:''}" oninput="App.calcLote()"></div>
+    </div>`;
+  abrirDlg(`
+  <div class="dlg-h"><h2>${l?(tipo==='bs'?'Editar compra de Bs':'Editar compra de USDT'):'Nueva compra'}</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <form id="fLote" class="dlg-b" autocomplete="off" data-tipo="${tipo}">
+    ${selector}
+    ${campos}
+    <label>Nota</label><input name="nota" value="${esc(l?l.nota||'':'')}">
+    <div class="calc" id="loteCalc"></div>
+  </form>
+  <div class="dlg-f">${l?`<button class="btn danger" onclick="App.borrar('lotes','${l.id}')">Eliminar</button>`:''}<span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cancelar</button><button class="btn pri" onclick="App.guardarLote(${l?`'${l.id}'`:'null'})">Guardar</button></div>`);
+  calcLote(!l);
+}
+function calcLote(autoTramo){
+  const f=document.getElementById('fLote'); if(!f) return;
+  const cb=(+S.config.comisionBanco||0)/100;
+  if(f.dataset.tipo==='bs'){
+    // v5: la tasa ya no se escribe; se calcula con los Bs recibidos y los CLP pagados
+    const clp=parseInt0(f.clp.value), bs=parseNum(f.bs.value), bsTrab=parseNum(f.bsTrab.value)||0;
+    const tasa= clp>0&&bs>0? bs/clp : NaN;
+    const bsNet= bs>0? Math.max(0,bs-bsTrab)*(1-cb) : NaN, tc= bsNet>0&&clp>0? bsNet/clp : null;
+    const ref=C.ultimoUSDTConBs, ahorro= tc&&ref? bsNet/ref.tasaCosto-clp : null;
+    const td=+S.config.tasaDia, ganDia= tc&&td>0? bsNet/td-clp : null;
+    const r=f.dRut.value.trim(); document.getElementById('dRutHint').textContent= r&&!rutValido(r)? 'RUT no válido (ok si es otro documento)' : '';
+    document.getElementById('loteCalc').innerHTML=`
+      <span>Tasa que pagaste (Bs por CLP)</span><b>${fT(tasa)}</b>
+      <span>Bs recibidos en Venezuela</span><b>${fBs(bs)}</b>
+      <span>− Comisión trabajador</span><b>${fBs(bsTrab)}</b>
+      <span>Bs netos (−${S.config.comisionBanco}% banco)</span><b>${fBs(bsNet)}</b>
+      <span>Tasa de costo (Bs por CLP)</span><b>${fT(tc)}</b>
+      <span>Costo trabajador</span><b>${tasa>0?fCLP(bsTrab/tasa):'—'}</b>
+      <span>Ahorro vs última compra USDT (${fT(ref&&ref.tasaCosto)})</span><b class="${ahorro<0?'neg':'pos'}">${ok(ahorro)?(ahorro>=0?'ahorras ':'pagas de más ')+fCLP(Math.abs(ahorro)):'—'}</b>
+      ${td>0?`<span>Ganancia estimada si envías estos Bs a la tasa del día (${fT(td)})</span><b class="${ganDia<0?'neg':'pos'}">${ok(ganDia)?fCLP(ganDia)+(clp?' ('+fPct(ganDia/clp)+')':''):'—'}</b>`:''}
+      <div class="partes muted">Estimación informativa: la ganancia real aparece en el residual de los envíos que usen estos Bs (cada uno con su propia tasa). No se suma aparte a la ganancia total.</div>`;
+    return;
+  }
+  const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
+  if(autoTramo && usdt>0){ const t=tramoPara(usdt); f.trab.value=t.trab; f.mio.value=t.mio; document.getElementById('tramoHint').textContent=`Tramo aplicado: ${t.trab} + ${t.mio} USDT`; }
+  const trab=parseNum(f.trab.value)||0, mio=parseNum(f.mio.value)||0;
+  const vend=usdt-trab-mio, precio=usdt>0?clp/usdt:null, bsNet= bs>0? bs*(1-cb):null;
+  document.getElementById('bsHint').textContent= bs>0? '= '+fBs(bs) : '';
+  document.getElementById('loteCalc').innerHTML=`
+    <span>Precio USDT</span><b>${fCLP(precio)}</b>
+    <span>USDT a vender en Venezuela</span><b>${ok(vend)?nf2.format(vend):'—'}</b>
+    <span>Bs netos (−${S.config.comisionBanco}%)</span><b>${fBs(bsNet)}</b>
+    <span>Bs por USDT vendido</span><b>${bs>0&&vend>0?nf2.format(bs/vend):'—'}</b>
+    <span>Tasa de costo (Bs por CLP)</span><b>${bsNet&&clp?fT(bsNet/clp):'—'}</b>
+    <span>Tu ganancia en USDT</span><b class="pos">${precio?fCLP(mio*precio):'—'}</b>
+    <span>Costo trabajador</span><b>${precio?fCLP(trab*precio):'—'}</b>`;
+}
+function guardarLote(id){
+  const f=document.getElementById('fLote'); if(!f.reportValidity()) return;
+  const prev= id? S.lotes.find(x=>x.id===id) : null;
+  const base={fecha:f.fecha.value, nota:f.nota.value.trim(), createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()};
+  if(f.dataset.tipo==='bs'){
+    const clp=parseInt0(f.clp.value), bsIn=parseNum(f.bs.value), bsTrab=parseNum(f.bsTrab.value)||0;
+    if(!(clp>0)) return toast('CLP inválido'); if(!(bsIn>0)) return toast('Bs recibidos inválidos');
+    const bs=Math.round(bsIn*100)/100, tasa=bs/clp; // v5: la tasa se deriva (Bs ÷ CLP)
+    if(bsTrab<0||bsTrab>=bs) return toast('Comisión del trabajador inválida');
+    guardar('lotes', id||uid(), {...base, tipo:'bs', clp, tasa, bs, bsTrab, usdt:0, usdtTrab:0, usdtMio:0,
+      destinatario:{nombre:f.dNombre.value.trim(), rut:f.dRut.value.trim()? normRut(f.dRut.value) : ''}}, false);
+  } else {
+    const clp=parseInt0(f.clp.value), usdt=parseNum(f.usdt.value), bs=parseNum(f.bs.value);
+    if(!(clp>0)) return toast('CLP inválido'); if(!(usdt>0)) return toast('USDT inválido');
+    guardar('lotes', id||uid(), {...base, tipo:'usdt', clp, usdt, usdtTrab:parseNum(f.trab.value)||0, usdtMio:parseNum(f.mio.value)||0,
+      bs: bs>0? bs : null}, false);
+  }
+  cerrarDlg(); toast(id?'Compra actualizada':'Compra registrada');
+}
+
+function abrirCliente(id){
+  const c=S.clientes.find(x=>x.id===id); if(!c) return toast('Cliente no encontrado');
+  const a=C.cli[id]||{n:0,total:0,residual:0};
+  const es=C.E.filter(e=>e.clienteId===id).sort((x,y)=>(y.fecha||'').localeCompare(x.fecha||''));
+  const refs=S.clientes.filter(x=>x.referidoPor===id);
+  abrirDlg(`
+  <div class="dlg-h"><h2>${esc(c.nombre)}</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <div class="dlg-b">
+    <form id="fCli" class="f2" autocomplete="off">
+      <div><label>Nombre</label><input name="nombre" value="${esc(c.nombre)}"></div>
+      <div><label>RUT / documento</label><input value="${esc(c.rut||c.id)}" disabled></div>
+      <div><label>Teléfono</label><input name="telefono" value="${esc(c.telefono||'')}"></div>
+      <div><label>Nota</label><input name="nota" value="${esc(c.nota||'')}"></div>
+    </form>
+    <div class="calc">
+      <span>Envíos</span><b>${a.n}</b><span>Total enviado</span><b>${fCLP(a.total)}</b>
+      <span>Residual generado</span><b>${fCLP(a.residual)}</b><span>Promedio por envío</span><b>${fCLP(a.n?a.total/a.n:null)}</b>
+      <span>Último envío</span><b>${a.ultimo?fFecha(a.ultimo):'—'}</b><span>Origen</span><b>${c.referidoPor?'Referido por '+esc((S.clientes.find(x=>x.id===c.referidoPor)||{}).nombre||''):esc(c.origen||'—')}</b>
+      <span>Clientes que trajo</span><b>${refs.length}</b>
+    </div>
+    <h3 style="margin:16px 0 6px;font-size:14px">Beneficiarios</h3>
+    ${(c.beneficiarios||[]).length? `<ul class="list-plain small">${c.beneficiarios.map(b=>`<li>${esc(b.nombre)} · C.I. ${esc(b.cedula)} · ${esc(b.banco)} ${esc(b.cuenta)} ${esc(b.telefono)}</li>`).join('')}</ul>`:'<div class="muted small">Sin beneficiarios guardados.</div>'}
+    <h3 style="margin:16px 0 6px;font-size:14px">Historial</h3>
+    <div class="tablewrap"><table><thead><tr><th>Fecha</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th>Beneficiario</th><th>Estado</th></tr></thead>
+    <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')"><td>${fFecha(e.fecha)}</td><td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td><td class="n">${fBs(e.bs)}</td><td>${esc(e.beneficiario&&e.beneficiario.nombre)}</td><td><span class="badge ${e.estado==='pagado'?'ok':'warn'}">${e.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`).join('')||'<tr><td colspan="6" class="muted">Sin envíos</td></tr>'}</tbody></table></div>
+  </div>
+  <div class="dlg-f"><button class="btn danger" onclick="App.borrarCliente('${esc(c.id)}')">Eliminar</button><span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cerrar</button><button class="btn pri" onclick="App.guardarCliente('${esc(c.id)}')">Guardar</button></div>`);
+}
+function guardarCliente(id){ const f=document.getElementById('fCli'); guardar('clientes', id, {nombre:f.nombre.value.trim(), telefono:f.telefono.value.trim(), nota:f.nota.value.trim(), actualizado:Date.now()}, true); cerrarDlg(); toast('Cliente actualizado'); }
+function borrarCliente(id){
+  const n=S.envios.filter(e=>e.clienteId===id).length;
+  if(n) return toast(`Tiene ${n} envíos. Elimina primero sus envíos.`);
+  if(confirm('¿Eliminar este cliente?')){ eliminar('clientes',id); cerrarDlg(); }
+}
+function borrar(col,id){ if(confirm('¿Eliminar este registro? No se puede deshacer.')){ eliminar(col,id); cerrarDlg(); toast('Eliminado'); } }
+function toggleEstado(id){ const e=S.envios.find(x=>x.id===id); if(!e) return; guardar('envios', id, {estado: e.estado==='pagado'?'pendiente':'pagado', updatedAt:Date.now()}, true); }
+
+function guardarAjustes(){
+  const g=id=>document.getElementById(id).value;
+  const tramos=[...document.querySelectorAll('#tramosBody tr')].map(tr=>({
+    desde: parseNum(tr.querySelector('.tDesde').value)||0,
+    hasta: tr.querySelector('.tHasta').value.trim()===''? null : parseNum(tr.querySelector('.tHasta').value),
+    trab: parseNum(tr.querySelector('.tTrab').value)||0, mio: parseNum(tr.querySelector('.tMio').value)||0
+  })).sort((a,b)=>a.desde-b.desde);
+  const cfg={tasaDia:parseNum(g('cfTasa')), comisionBanco:parseNum(g('cfBanco')), metaUSD:parseInt0(g('cfMeta')), diasInactivo:parseInt0(g('cfDias')), dolarRef:parseInt0(g('cfDolar')), tramos};
+  for(const k of ['tasaDia','comisionBanco','metaUSD','diasInactivo','dolarRef']) if(!ok(cfg[k])) return toast('Valor inválido: '+k);
+  guardar('config','general',cfg,false); toast('Ajustes guardados');
+}
+function addTramo(){ document.getElementById('tramosBody').insertAdjacentHTML('beforeend', filaTramo({desde:'',hasta:'',trab:0,mio:0})); }
+
+/* ---------- exportar / importar ---------- */
+function exportJSON(){
+  const data={version:1, exportado:new Date().toISOString(), clientes:S.clientes, envios:S.envios, lotes:S.lotes, config:S.config};
+  descargar(`remesas-respaldo-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(data,null,2), 'application/json');
+}
+function csv(rows){ return '\ufeff'+rows.map(r=>r.map(v=>{ const s=v==null?'':String(v); return /[;"\n]/.test(s)? '"'+s.replace(/"/g,'""')+'"' : s; }).join(';')).join('\n'); }
+const dec=n=> ok(n)? String(Math.round(n*100)/100).replace('.',',') : '';
+function exportCSV(tipo){
+  let rows;
+  if(tipo==='envios') rows=[['Fecha','Cliente','RUT','CLP','Tasa','Bs','Costo CLP','Residual CLP','Beneficiario','Cédula','Banco','Cuenta','Estado','Comprobante','Nota'],
+    ...C.E.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>[e.fecha,e.clienteNombre,e.clienteRut,e.clp,String(e.tasa).replace('.',','),dec(e.bs),dec(e.costo),dec(e.residual),e.beneficiario&&e.beneficiario.nombre,e.beneficiario&&e.beneficiario.cedula,e.beneficiario&&e.beneficiario.banco,e.beneficiario&&e.beneficiario.cuenta,e.estado,e.comprobante,e.nota])];
+  else if(tipo==='lotes') rows=[['Fecha','Tipo','CLP','USDT','Precio USDT','USDT trabajador','USDT tuyos','USDT vendidos','Tasa pagada (Bs/CLP)','Bs trabajador','Bs recibidos','Bs netos','Tasa costo','Ganancia USDT CLP','Ahorro vs USDT CLP','Transferido a','RUT transferido','Nota'],
+    ...C.L.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(l=>[l.fecha,l.esBs?'Bs':'USDT',l.clp,l.esBs?'':dec(l.usdt),l.esBs?'':dec(l.precio),l.esBs?'':dec(l.trab),l.esBs?'':dec(l.mio),l.esBs?'':dec(l.vend),l.esBs?String(l.tasa).replace('.',','):'',l.esBs?dec(l.bsTrab):'',l.tieneBs?dec(l.bs):'',l.tieneBs?dec(l.bsNet):'',l.tasaCosto?String(l.tasaCosto.toFixed(6)).replace('.',','):'',l.esBs?'':dec(l.ganUSDT),l.esBs?dec(l.ahorro):'',l.destinatario&&l.destinatario.nombre,l.destinatario&&l.destinatario.rut,l.nota])];
+  else rows=[['RUT','Nombre','Teléfono','Origen','Referido por','Envíos','Total CLP','Residual CLP','Último envío','Días sin enviar'],
+    ...S.clientes.map(c=>{ const a=C.cli[c.id]||{}; return [c.rut||c.id,c.nombre,c.telefono,c.origen,(S.clientes.find(x=>x.id===c.referidoPor)||{}).nombre||'',a.n||0,a.total||0,dec(a.residual||0),a.ultimo||'',a.dias??'']; })];
+  descargar(`remesas-${tipo}-${new Date().toISOString().slice(0,10)}.csv`, csv(rows), 'text/csv;charset=utf-8');
+}
+async function importJSON(file){
+  if(!file) return;
+  try{
+    const d=JSON.parse(await file.text()); const items=[];
+    ['clientes','envios','lotes'].forEach(c=> (d[c]||[]).forEach(o=>{ const {id,...rest}=o; if(id) items.push({col:c,id,data:rest}); }));
+    if(d.config) items.push({col:'config',id:'general',data:d.config});
+    if(!items.length) return toast('El archivo no tiene datos');
+    if(!confirm(`Se importarán ${items.length} registros. ¿Continuar?`)) return;
+    await Store.batchSet(items); toast('Importación lista');
+  }catch(e){ toast('Archivo inválido: '+e.message); }
+}
+
+/* ============================================================
+   5) ARRANQUE
+   ============================================================ */
+function startData(){
+  stopData();
+  ['clientes','envios','lotes'].forEach(c=> unsubs.push(Store.listen(c, docs=>{ S[c]=docs; render(); })));
+  unsubs.push(Store.listen('config', docs=>{ const g=docs.find(d=>d.id==='general'); S.config={...structuredClone(DEFAULT_CONFIG), ...(g||{})}; delete S.config.id; render(); }));
+}
+function stopData(){ unsubs.forEach(u=>{ try{u&&u()}catch(e){} }); unsubs=[]; }
+function mostrar(v){ ['loginView','appView','loadingView'].forEach(x=> document.getElementById(x).classList.toggle('hidden', x!==v)); }
+
+document.getElementById('tabs').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b) go(b.dataset.v); });
+document.getElementById('mesSel').addEventListener('change', e=>{ S.mes=e.target.value; render(); });
+
+window.App = {
+  go, cerrar:cerrarDlg, abrirEnvio, abrirLote, abrirCliente, rutInput, usarBen, calcEnvio, calcLote,
+  usarTasaDia, guardarEnvio, guardarLote, guardarCliente, borrarCliente, borrar, toggleEstado, guardarAjustes, addTramo,
+  exportJSON, exportCSV, importJSON,
+  buscar(v){ S.q=v; S._focusQ=true; render(); }, setEstado(v){ S.estado=v; render(); }, setInactivos(v){ S.soloInactivos=v; render(); },
+  async salir(){ await Store.logout(); }
+};
+
+async function main(){
+  const badge=document.getElementById('modeBadge');
+  if(MODO_LOCAL){
+    Store=LocalStore; await Store.init();
+    badge.textContent='Modo local'; badge.className='badge warn'; badge.title='Datos solo en este navegador. Configura Firebase para sincronizar.';
+    startData(); mostrar('appView'); return;
+  }
+  Store=FireStore;
+  FireStore.onAuth=u=>{
+    if(u){ S.email=u.email; badge.textContent='En línea'; badge.className='badge ok'; startData(); mostrar('appView'); }
+    else { stopData(); mostrar('loginView'); }
+  };
+  try{ await Store.init(); }
+  catch(e){ document.getElementById('loadingView').innerHTML=`<div class="card"><b>No se pudo cargar Firebase.</b><p class="muted small">${esc(e.message)}</p></div>`; return; }
+  window.addEventListener('online', ()=>{ badge.textContent='En línea'; badge.className='badge ok'; });
+  window.addEventListener('offline',()=>{ badge.textContent='Sin conexión (se sincroniza al volver)'; badge.className='badge warn'; });
+  document.getElementById('loginForm').addEventListener('submit', async ev=>{
+    ev.preventDefault(); const err=document.getElementById('lgErr'); err.textContent='';
+    try{ await Store.login(document.getElementById('lgEmail').value.trim(), document.getElementById('lgPass').value); }
+    catch(e){ err.textContent= e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'||e.code==='auth/user-not-found' ? 'Correo o contraseña incorrectos' : 'Error: '+(e.code||e.message); }
+  });
+}
+main();
+</script>
+</body>
+</html>
