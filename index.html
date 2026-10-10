@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- DASH Remesas · Envíos sin fronteras · v7 -->
+<!-- DASH Remesas · Envíos sin fronteras · v8 -->
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -122,6 +122,10 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .chart text{fill:var(--muted);font-size:11px}
 .list-plain{margin:0;padding-left:18px}
 .estado{border:0;cursor:pointer}
+/* v8: editor de beneficiarios (Clientes → Editar) */
+.benEd{border:1px solid var(--line);border-radius:10px;padding:8px 12px 12px;margin-top:10px}
+.benEd>.row{justify-content:space-between}
+.benEd>.row b{font-size:13px;color:var(--muted)}
 /* v6: selector de fondo */
 .fondos{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
 .fondo-op{border:2px solid var(--line);border-radius:12px;padding:0;background:var(--card);cursor:pointer;overflow:hidden;text-align:left}
@@ -471,8 +475,7 @@ function vInicio(){
   const r=resumen(S.mes), usd=usdRate(S.mes||mesActual());
   const ganUSD=r.ganancia/usd, meta=+S.config.metaUSD||5000;
   const pctMeta=Math.max(0,Math.min(1,ganUSD/meta));
-  const ta=C.tasaActual, td=+S.config.tasaDia;
-  const spread= ta&&td? 1-td/ta : null;
+  const td=+S.config.tasaDia;
   const inact=Object.values(C.cli).filter(c=>c.dias!=null&&c.dias>(+S.config.diasInactivo||30)).length;
   const ticket=r.n? r.vol/r.n : null;
   const ks=ultimos12(S.mes);
@@ -483,7 +486,6 @@ function vInicio(){
   const alerts=[];
   if(C.faltaBs>0) alerts.push(`<div class="alert bad"><b>Faltan ${fBs(C.faltaBs)}</b> para cubrir envíos ya registrados. Compra USDT y regístrala: el costo de esos envíos se completa solo.</div>`);
   if(C.lotesSinBs.length) alerts.push(`<div class="alert info">${C.lotesSinBs.length} compra(s) sin Bs recibidos registrados (${fUSDT(C.usdtPorVender)} por vender). <a href="#" onclick="App.go('compras');return false">Completar</a></div>`);
-  const activos=C.L.filter(l=>l.tieneBs&&l.restante>0).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   const alcanza= td? C.stockBs/td : null;
   const nCards= 6 + (hayPendientes()?1:0);
   return `
@@ -496,17 +498,6 @@ function vInicio(){
     <div class="card kpi"><h3>Margen real</h3><div class="v">${fPct(r.margen)}</div><div class="s">Ganancia ÷ volumen enviado</div></div>
     <div class="card kpi"><h3>Clientes</h3><div class="v">${r.nClientes||0}</div><div class="s">activos en el período · ${r.nuevos||0} nuevos · ${inact} inactivos (+${S.config.diasInactivo} días)</div></div>
     ${C.E.some(e=>e.estado!=='pagado')? `<div class="card kpi"><h3>Pendientes por pagar</h3><div class="v">${fBs(C.bsPend)}</div><div class="s">${C.E.filter(e=>e.estado!=='pagado').length} envíos sin marcar como pagados</div></div>` : ''}
-  </div>
-
-  <div class="sec card">
-    <h3>Stock por compra (se usa primero la más antigua)</h3>
-    ${activos.length? `<div class="tablewrap" style="border:0"><table><thead><tr><th>Compra</th><th class="n">Tasa costo</th><th class="n">Bs netos</th><th class="n">Quedan</th><th>Uso</th></tr></thead><tbody>${activos.map(l=>`<tr class="click" onclick="App.abrirLote('${l.id}')"><td>${fFecha(l.fecha)} ${tipoBadge(l)}</td><td class="n">${fT(l.tasaCosto)}</td><td class="n">${fBs(l.bsNet)}</td><td class="n"><b>${fBs(l.restante)}</b>${ok(l.usdtRestante)?`<div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div>`:''}</td><td><div class="stockbar"><i style="width:${Math.round(l.usado/l.bsNet*100)}%"></i></div><span class="muted small">${Math.round(l.usado/l.bsNet*100)}% usado</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="muted small">${C.faltaBs>0?'Sin stock: los envíos registrados ya consumieron todo.':'Sin stock. Registra una compra con los Bs recibidos.'}</div>`}
-  </div>
-
-  <div class="sec card">
-    <h3>Tasa del día vs. costo</h3>
-    <div class="row"><span>Tasa del día: <b>${fT(td)}</b></span><span class="muted">·</span><span>Residual estimado por envío: <b class="${spread<0?'neg':'pos'}">${fPct(spread)}</b></span><span class="muted small">(además de tus USDT por compra)</span></div>
-    ${ta?`<div class="small muted" style="margin-top:6px">Tasa para un residual de 1%: <b>${fT(ta*.99)}</b> · 2%: <b>${fT(ta*.98)}</b> · 3%: <b>${fT(ta*.97)}</b></div>`:'<div class="small muted">Registra una compra con Bs recibidos para calcular la tasa de costo.</div>'}
   </div>
 
   <div class="sec grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
@@ -541,14 +532,13 @@ function vEnvios(){
     <span class="spacer"></span><span class="muted small">${es.length} envíos · ${fMes(S.mes)}</span>
   </div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Fecha</th><th>Cliente</th><th>Beneficiario</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th>${hp?'<th>Estado</th>':''}</tr></thead>
+    <thead><tr><th>Fecha</th><th>Cliente</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th>${hp?'<th>Estado</th>':''}</tr></thead>
     <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')">
       <td>${fFecha(e.fecha)}</td><td>${esc(e.clienteNombre)}<div class="muted small">${esc(e.clienteRut)}</div></td>
-      <td>${esc(e.beneficiario&&e.beneficiario.nombre)}<div class="muted small">${esc(e.beneficiario&&e.beneficiario.banco)}</div></td>
       <td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td>
       <td class="n">${fBs(e.bs)}${e.falta?`<div><span class="badge bad">faltan ${fBs(e.falta)}</span></div>`:''}${e.partes.length>1?`<div class="muted small">${e.partes.length} compras</div>`:''}</td>
-      ${hp?`<td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td>`:''}</tr>`).join('') || `<tr><td colspan="${hp?7:6}" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
-    ${es.length?`<tfoot><tr><td colspan="3">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td>${hp?'<td></td>':''}</tr></tfoot>`:''}
+      ${hp?`<td><button class="badge estado ${e.estado==='pagado'?'ok':'warn'}" onclick="event.stopPropagation();App.toggleEstado('${e.id}')">${e.estado==='pagado'?'Pagado':'Pendiente'}</button></td>`:''}</tr>`).join('') || `<tr><td colspan="${hp?6:5}" class="muted">No hay envíos. Usa “+ Envío”.</td></tr>`}</tbody>
+    ${es.length?`<tfoot><tr><td colspan="2">Total</td><td class="n">${fCLP(t.clp)}</td><td></td><td class="n">${fBs(t.bs)}</td>${hp?'<td></td>':''}</tr></tfoot>`:''}
   </table></div>
   <p class="muted small">“Faltan X Bs”: el stock no alcanzó para cubrir ese envío; se completa solo al registrar la compra que lo cubre. “2 compras”: el envío usó Bs de dos compras, cada parte con su tasa. El residual de cada envío (CLP cobrados − costo de los Bs) se ve en Estadísticas, en el detalle del cliente y en la exportación CSV.${hp?' Toca el estado para marcar pagado/pendiente.':''}</p>`;
 }
@@ -588,6 +578,9 @@ function vCompras(){
 
 function vEstadisticas(){
   const r=resumen(S.mes), ta=C.tasaActual;
+  // v8: "Stock por compra" y "Tasa del día vs. costo" vienen del Dashboard (mismo contenido; muestran el stock actual, no dependen del mes)
+  const td=+S.config.tasaDia, spread= ta&&td? 1-td/ta : null;
+  const activos=C.L.filter(l=>l.tieneBs&&l.restante>0).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   // residual de los envíos del período (solo los que ya tienen costo; los que tienen "faltan Bs" quedan fuera hasta que se cubran)
   const es=C.E.filter(e=>!S.mes||e.mes===S.mes);
   const con=es.filter(e=>e.residual!=null), sinCosto=es.length-con.length;
@@ -614,7 +607,19 @@ function vEstadisticas(){
   <div class="sec card"><h3>Envíos con mayor residual · ${fMes(S.mes)}</h3>
     ${top.length? `<div class="tablewrap" style="border:0"><table><thead><tr><th>Fecha</th><th>Cliente</th><th class="n">CLP</th><th class="n">Residual</th></tr></thead><tbody>${top.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')"><td>${fFecha(e.fecha)}</td><td>${esc(e.clienteNombre)}</td><td class="n">${fCLP(e.clp)}</td><td class="n ${e.residual<0?'neg':''}">${fCLP(e.residual)}<div class="muted small">${fPct(e.clp? e.residual/e.clp : null)}</div></td></tr>`).join('')}</tbody></table></div>` : '<div class="muted small">Sin envíos con costo calculado en este período.</div>'}
   </div>
-  <p class="muted small">Residual de un envío = CLP que pagó el cliente − costo de los Bs entregados (cada parte con la tasa de costo de su compra). La ganancia total del Dashboard = ganancia por compras de USDT + este residual.</p>`;
+  <p class="muted small">Residual de un envío = CLP que pagó el cliente − costo de los Bs entregados (cada parte con la tasa de costo de su compra). La ganancia total del Dashboard = ganancia por compras de USDT + este residual.</p>
+
+  <h2 class="sectit">Stock y tasa del día</h2>
+  <div class="card">
+    <h3>Stock por compra (se usa primero la más antigua)</h3>
+    ${activos.length? `<div class="tablewrap" style="border:0"><table><thead><tr><th>Compra</th><th class="n">Tasa costo</th><th class="n">Bs netos</th><th class="n">Quedan</th><th>Uso</th></tr></thead><tbody>${activos.map(l=>`<tr class="click" onclick="App.abrirLote('${l.id}')"><td>${fFecha(l.fecha)} ${tipoBadge(l)}</td><td class="n">${fT(l.tasaCosto)}</td><td class="n">${fBs(l.bsNet)}</td><td class="n"><b>${fBs(l.restante)}</b>${ok(l.usdtRestante)?`<div class="muted small">≈ ${fUSDT(l.usdtRestante)}</div>`:''}</td><td><div class="stockbar"><i style="width:${Math.round(l.usado/l.bsNet*100)}%"></i></div><span class="muted small">${Math.round(l.usado/l.bsNet*100)}% usado</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="muted small">${C.faltaBs>0?'Sin stock: los envíos registrados ya consumieron todo.':'Sin stock. Registra una compra con los Bs recibidos.'}</div>`}
+  </div>
+
+  <div class="sec card">
+    <h3>Tasa del día vs. costo</h3>
+    <div class="row"><span>Tasa del día: <b>${fT(td)}</b></span><span class="muted">·</span><span>Residual estimado por envío: <b class="${spread<0?'neg':'pos'}">${fPct(spread)}</b></span><span class="muted small">(además de tus USDT por compra)</span></div>
+    ${ta?`<div class="small muted" style="margin-top:6px">Tasa para un residual de 1%: <b>${fT(ta*.99)}</b> · 2%: <b>${fT(ta*.98)}</b> · 3%: <b>${fT(ta*.97)}</b></div>`:'<div class="small muted">Registra una compra con Bs recibidos para calcular la tasa de costo.</div>'}
+  </div>`;
 }
 
 function vClientes(){
@@ -797,21 +802,27 @@ function guardarEnvio(id){
   if(!(clp>0)) return toast('Monto CLP inválido'); if(!(tasa>0)) return toast('Tasa inválida');
   const rut=f.rut.value.trim(), cid=normRut(rut); if(!cid) return toast('RUT requerido');
   const existente=clientePorRut(rut);
+  const prev= id? S.envios.find(x=>x.id===id) : null;
+  const nombreForm=f.nombre.value.trim();
   const ben={nombre:f.bNombre.value.trim(), cedula:f.bCedula.value.trim(), banco:f.bBanco.value.trim(), cuenta:f.bCuenta.value.trim(), telefono:f.bTel.value.trim()};
   const tieneBen=Object.values(ben).some(Boolean);
   const clienteId= existente? existente.id : cid;
   // cliente
   const benef=[...((existente&&existente.beneficiarios)||[])];
-  if(tieneBen){ const k=b=>(b.cedula+'|'+b.cuenta).toLowerCase(); const i=benef.findIndex(b=>k(b)===k(ben)); if(i>=0) benef[i]={...benef[i],...ben}; else benef.push(ben); }
-  const cdata={rut:existente?existente.rut||rut:rut, nombre:f.nombre.value.trim(), beneficiarios:benef, actualizado:Date.now()};
+  // v8: al editar un envío antiguo sin cambiar su beneficiario, no se vuelve a agregar a la lista del cliente (pudo quitarse en Clientes → Editar)
+  const kb=b=>['nombre','cedula','banco','cuenta','telefono'].map(k=>String((b&&b[k])||'').trim()).join('|');
+  const benSinCambio= prev && kb(prev.beneficiario)===kb(ben);
+  if(tieneBen && !benSinCambio){ const k=b=>(b.cedula+'|'+b.cuenta).toLowerCase(); const i=benef.findIndex(b=>k(b)===k(ben)); if(i>=0) benef[i]={...benef[i],...ben}; else benef.push(ben); }
+  // v8: al editar un envío antiguo sin cambiar el nombre, se conserva el nombre actual del cliente (pudo cambiarse en Clientes → Editar)
+  const nombreCli= existente && prev && existente.nombre && nombreForm===String(prev.clienteNombre||'').trim() ? existente.nombre : nombreForm;
+  const cdata={rut:existente?existente.rut||rut:rut, nombre:nombreCli, beneficiarios:benef, actualizado:Date.now()};
   if(f.telefono.value.trim()) cdata.telefono=f.telefono.value.trim();
   if(!existente){ cdata.creado=Date.now(); const o=f.origen.value; if(o.startsWith('c:')){ cdata.referidoPor=o.slice(2); cdata.origen='Referido'; } else if(o.startsWith('o:')) cdata.origen=o.slice(2); }
   guardar('clientes', clienteId, cdata, true);
-  // envío
-  const prev= id? S.envios.find(x=>x.id===id) : null;
+  // envío (clienteNombre = nombre escrito en el formulario: registro histórico)
   const eid= id || uid();
   guardar('envios', eid, {
-    fecha:f.fecha.value, clienteId, clienteRut:cdata.rut, clienteNombre:cdata.nombre,
+    fecha:f.fecha.value, clienteId, clienteRut:cdata.rut, clienteNombre:nombreForm,
     clp, tasa, bs:Math.round(clp*tasa*100)/100, beneficiario:ben,
     comprobante:f.comprobante.value.trim(), estado: f.estado? f.estado.value : 'pagado', nota:f.nota.value.trim(),
     createdAt: prev&&prev.createdAt || Date.now(), updatedAt:Date.now()
@@ -923,12 +934,10 @@ function abrirCliente(id){
   abrirDlg(`
   <div class="dlg-h"><h2>${esc(c.nombre)}</h2><button class="x" onclick="App.cerrar()">×</button></div>
   <div class="dlg-b">
-    <form id="fCli" class="f2" autocomplete="off">
-      <div><label>Nombre</label><input name="nombre" value="${esc(c.nombre)}"></div>
-      <div><label>RUT / documento</label><input value="${esc(c.rut||c.id)}" disabled></div>
-      <div><label>Teléfono</label><input name="telefono" value="${esc(c.telefono||'')}"></div>
-      <div><label>Nota</label><input name="nota" value="${esc(c.nota||'')}"></div>
-    </form>
+    <div class="calc">
+      <span>RUT / documento</span><b>${esc(c.rut||c.id)}</b><span>Teléfono</span><b>${esc(c.telefono||'—')}</b>
+      ${c.nota?`<span>Nota</span><b style="white-space:normal;overflow-wrap:anywhere">${esc(c.nota)}</b>`:''}
+    </div>
     <div class="calc">
       <span>Envíos</span><b>${a.n}</b><span>Total enviado</span><b>${fCLP(a.total)}</b>
       <span>Residual generado</span><b>${fCLP(a.residual)}</b><span>Promedio por envío</span><b>${fCLP(a.n?a.total/a.n:null)}</b>
@@ -941,9 +950,54 @@ function abrirCliente(id){
     <div class="tablewrap"><table><thead><tr><th>Fecha</th><th class="n">CLP</th><th class="n">Tasa</th><th class="n">Bs</th><th>Beneficiario</th><th>Estado</th></tr></thead>
     <tbody>${es.map(e=>`<tr class="click" onclick="App.abrirEnvio('${e.id}')"><td>${fFecha(e.fecha)}</td><td class="n">${fCLP(e.clp)}</td><td class="n">${fT(e.tasa)}</td><td class="n">${fBs(e.bs)}</td><td>${esc(e.beneficiario&&e.beneficiario.nombre)}</td><td><span class="badge ${e.estado==='pagado'?'ok':'warn'}">${e.estado==='pagado'?'Pagado':'Pendiente'}</span></td></tr>`).join('')||'<tr><td colspan="6" class="muted">Sin envíos</td></tr>'}</tbody></table></div>
   </div>
-  <div class="dlg-f"><button class="btn danger" onclick="App.borrarCliente('${esc(c.id)}')">Eliminar</button><span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cerrar</button><button class="btn pri" onclick="App.guardarCliente('${esc(c.id)}')">Guardar</button></div>`);
+  <div class="dlg-f"><button class="btn danger" onclick="App.borrarCliente('${esc(c.id)}')">Eliminar</button><span class="spacer"></span><button class="btn" onclick="App.cerrar()">Cerrar</button><button class="btn pri" onclick="App.editarCliente('${esc(c.id)}')">Editar</button></div>`);
 }
-function guardarCliente(id){ const f=document.getElementById('fCli'); guardar('clientes', id, {nombre:f.nombre.value.trim(), telefono:f.telefono.value.trim(), nota:f.nota.value.trim(), actualizado:Date.now()}, true); cerrarDlg(); toast('Cliente actualizado'); }
+/* v8: Clientes → Editar. El RUT es el ID del documento y no se puede cambiar (dejaría sus envíos sin cliente).
+   Los envíos antiguos conservan el nombre con que se registraron (clienteNombre). */
+const ORIGENES=['Referido','Redes sociales','WhatsApp / chatbot','Agente','Otro'];
+function filaBen(b){ b=b||{}; return `<div class="benEd"><div class="row"><b>Beneficiario</b><button type="button" class="btn sm danger" onclick="this.closest('.benEd').remove()">Quitar</button></div>
+  <div class="f2">
+    <div><label>Nombre</label><input class="bN" value="${esc(b.nombre||'')}"></div>
+    <div><label>Cédula</label><input class="bC" value="${esc(b.cedula||'')}"></div>
+    <div><label>Banco</label><input class="bB" value="${esc(b.banco||'')}"></div>
+    <div><label>Cuenta / pago móvil</label><input class="bK" value="${esc(b.cuenta||'')}"></div>
+    <div><label>Teléfono</label><input class="bT" inputmode="tel" value="${esc(b.telefono||'')}"></div>
+  </div></div>`; }
+function editarCliente(id){
+  const c=S.clientes.find(x=>x.id===id); if(!c) return toast('Cliente no encontrado');
+  const origen= c.origen || (c.referidoPor?'Referido':'');
+  const ops=[...ORIGENES]; if(origen && !ops.includes(origen)) ops.push(origen);
+  const otros=S.clientes.filter(x=>x.id!==id).sort((a,b)=>String(a.nombre||'').localeCompare(String(b.nombre||''),'es'));
+  const refHuerfano= c.referidoPor && !otros.some(x=>x.id===c.referidoPor);
+  abrirDlg(`
+  <div class="dlg-h"><h2>Editar cliente</h2><button class="x" onclick="App.cerrar()">×</button></div>
+  <form id="fCliEd" class="dlg-b" autocomplete="off" onsubmit="return false">
+    <div class="f2">
+      <div><label>Nombre</label><input name="nombre" required value="${esc(c.nombre||'')}"></div>
+      <div><label>RUT / documento</label><input value="${esc(c.rut||c.id)}" disabled><div class="hint">No se puede cambiar: identifica al cliente y a sus envíos.</div></div>
+      <div><label>Teléfono (WhatsApp)</label><input name="telefono" inputmode="tel" value="${esc(c.telefono||'')}"></div>
+      <div><label>¿Cómo llegó? (origen)</label><select name="origen" onchange="document.getElementById('refBox').classList.toggle('hidden',this.value!=='Referido')"><option value="">Sin dato</option>${ops.map(o=>`<option value="${esc(o)}" ${o===origen?'selected':''}>${esc(o)}</option>`).join('')}</select></div>
+      <div id="refBox" class="${origen==='Referido'?'':'hidden'}"><label>Referido por</label><select name="referidoPor"><option value="">— Sin dato —</option>${otros.map(x=>`<option value="${esc(x.id)}" ${x.id===c.referidoPor?'selected':''}>${esc(x.nombre||x.id)} · ${esc(x.rut||x.id)}</option>`).join('')}${refHuerfano?`<option value="${esc(c.referidoPor)}" selected>${esc(c.referidoPor)} (no encontrado)</option>`:''}</select></div>
+      <div><label>Nota</label><input name="nota" value="${esc(c.nota||'')}"></div>
+    </div>
+    <h3 style="margin:16px 0 0;font-size:14px">Beneficiarios</h3>
+    <div id="benEd">${(c.beneficiarios||[]).map(filaBen).join('')}</div>
+    <div class="row" style="margin-top:10px"><button type="button" class="btn sm" onclick="App.addBen()">+ Agregar beneficiario</button></div>
+  </form>
+  <div class="dlg-f"><span class="spacer"></span><button class="btn" onclick="App.abrirCliente('${esc(c.id)}')">Cancelar</button><button class="btn pri" onclick="App.guardarCliente('${esc(c.id)}')">Guardar</button></div>`);
+}
+function addBen(){ const box=document.getElementById('benEd'); if(!box) return; box.insertAdjacentHTML('beforeend', filaBen({})); const n=box.lastElementChild.querySelector('.bN'); n&&n.focus(); }
+function guardarCliente(id){
+  const f=document.getElementById('fCliEd'); if(!f||!f.reportValidity()) return;
+  const nombre=f.nombre.value.trim(); if(!nombre) return toast('Nombre requerido');
+  const origen=f.origen.value, v=(b,k)=>b.querySelector(k).value.trim();
+  const beneficiarios=[...document.querySelectorAll('#benEd .benEd')].map(b=>({nombre:v(b,'.bN'), cedula:v(b,'.bC'), banco:v(b,'.bB'), cuenta:v(b,'.bK'), telefono:v(b,'.bT')}))
+    .filter(b=>Object.values(b).some(Boolean));
+  const data={nombre, telefono:f.telefono.value.trim(), origen, referidoPor: origen==='Referido'? f.referidoPor.value : '', nota:f.nota.value.trim(), beneficiarios, actualizado:Date.now()};
+  guardar('clientes', id, data, true); // merge: no toca rut ni creado
+  const i=S.clientes.findIndex(x=>x.id===id); if(i>=0) S.clientes[i]={...S.clientes[i], ...data}; // para volver al detalle ya actualizado
+  render(); abrirCliente(id); toast('Cliente actualizado');
+}
 function borrarCliente(id){
   const n=S.envios.filter(e=>e.clienteId===id).length;
   if(n) return toast(`Tiene ${n} envíos. Elimina primero sus envíos.`);
@@ -1019,7 +1073,7 @@ document.getElementById('mesSel').addEventListener('change', e=>{ S.mes=e.target
 
 window.App = {
   go, cerrar:cerrarDlg, abrirEnvio, abrirLote, abrirCliente, rutInput, usarBen, calcEnvio, calcLote,
-  usarTasaDia, guardarEnvio, guardarLote, guardarCliente, borrarCliente, borrar, toggleEstado, guardarAjustes, addTramo, setFondo,
+  usarTasaDia, guardarEnvio, guardarLote, guardarCliente, editarCliente, addBen, borrarCliente, borrar, toggleEstado, guardarAjustes, addTramo, setFondo,
   exportJSON, exportCSV, importJSON,
   buscar(v){ S.q=v; S._focusQ=true; render(); }, setEstado(v){ S.estado=v; render(); }, setInactivos(v){ S.soloInactivos=v; render(); },
   async salir(){ await Store.logout(); }
